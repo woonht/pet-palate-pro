@@ -7,8 +7,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const SettingsPage = () => {
 
-  const [isVisible, setIsVisible] = useState(false)
-  const [isToggle, setIsToggle] = useState(false)
+  const [isNotifyVisible, setNotifyIsVisible] = useState(false)
+  const [isEnable, setIsEnable] = useState(false)
+  const [isModeVisible, setModeIsVisible] = useState(false)
+  const [isDog, setIsDog] = useState(false)
   const [count, setCount] = useState(1)
 
   return(
@@ -16,7 +18,7 @@ const SettingsPage = () => {
 
       <View style={styles.more_settings}>
        
-        <Pressable onPress={ ()=> router.push('/(tabs)/settings_page/notification') }>
+        <Pressable onPress={ () => setNotifyIsVisible(true) }>
           <View style={styles.rowSettings}>
             <View style={styles.IconTextLeft}>
               <Ionicons name="notifications" size={24} color="black" />
@@ -25,6 +27,45 @@ const SettingsPage = () => {
             <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
           </View>            
         </Pressable>
+
+        <Modal
+        animationType="fade"
+        transparent={true}
+        visible= {isNotifyVisible}
+        onRequestClose={ () => setNotifyIsVisible(false) }
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.popUp}>
+
+              <View style={styles.popUpOption}> 
+                <Text>Notification</Text>  
+                <TouchableOpacity onPress={() => setNotifyIsVisible(false)}>
+                  <Entypo name="cross" size={24} color="red" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity onPress={()=> setIsEnable(!isEnable)}>
+                <View style={styles.popUpOption}>
+                  <Text>Enable</Text>
+                  {isEnable ? 
+                  (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
+                  <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
+                  }
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={()=> setIsEnable(!isEnable)}>
+                <View style={styles.popUpOption}>
+                  <Text>Disable</Text>
+                  {isEnable ? 
+                  (<MaterialIcons name="radio-button-unchecked" size={24} color="black" />): 
+                  <MaterialIcons name="radio-button-checked" size={24} color="black" />
+                  }
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
        
         <Pressable onPress={ ()=> router.push('/(tabs)/settings_page/automated_schedule') }>
           <View style={styles.rowSettings}>
@@ -36,7 +77,7 @@ const SettingsPage = () => {
           </View>            
         </Pressable>
        
-        <Pressable onPress={()=> setIsVisible(true)}>
+        <Pressable onPress={()=> setModeIsVisible(true)}>
             <View style={styles.rowSettings}>
               <View style={styles.IconTextLeft}>
                 <Feather name="percent" size={24} color="black" />
@@ -49,35 +90,35 @@ const SettingsPage = () => {
         <Modal
         animationType="fade"
         transparent={true}
-        visible={isVisible}
-        onRequestClose={() => setIsVisible(false)}
+        visible={isModeVisible}
+        onRequestClose={() => setModeIsVisible(false)}
         >
         <View style={styles.modalBackground}>
           <View style={styles.popUp}>
 
             <View style={styles.popUpOption}> 
               <Text>Choose a Mode</Text>  
-              <TouchableOpacity onPress={() => setIsVisible(false)}>
+              <TouchableOpacity onPress={() => setModeIsVisible(false)}>
                 <Entypo name="cross" size={24} color="red" />
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity onPress={()=> setIsToggle(!isToggle)}>
+            <TouchableOpacity onPress={()=> setIsDog(!isDog)}>
               <View style={styles.popUpOption}>
                 <Text>Dog</Text>
-                {isToggle ? 
-                (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
-                <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
+                {isDog ? 
+                (<MaterialIcons name="radio-button-unchecked" size={24} color="black" />): 
+                <MaterialIcons name="radio-button-checked" size={24} color="black" />
                 }
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={()=> setIsToggle(!isToggle)}>
+            <TouchableOpacity onPress={()=> setIsDog(!isDog)}>
               <View style={styles.popUpOption}>
                 <Text>Cat</Text>
-                {isToggle ? 
-                (<MaterialIcons name="radio-button-unchecked" size={24} color="black" />): 
-                <MaterialIcons name="radio-button-checked" size={24} color="black" />
+                {isDog ? 
+                (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
+                <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
                 }
               </View>
             </TouchableOpacity>
