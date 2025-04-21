@@ -1,10 +1,11 @@
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PlatformPressable } from "@react-navigation/elements";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const Prescription = () => {
+const Medical = () => {
 
   const [isVisible, setIsVisible] = useState(false)
 
@@ -20,7 +21,7 @@ const Prescription = () => {
     setInput(prev => ({...prev, [key]: value}))
   }
 
-  type PrescriptionRecord = {
+  type MedicalRecordType = {
     
     id: string;
     medical_record: string;
@@ -29,35 +30,67 @@ const Prescription = () => {
     date: string;
   };
 
-  const [prescription, setPrescription] = useState<PrescriptionRecord[]>([])
+  const [medicalRecord, setMedicalRecord] = useState<MedicalRecordType[]>([])
 
-  const handleSave = () => {
+  const handleSave = async () => {
 
     if(!popUpInput.medical_record || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
       return
     }
     
-    const newPrescription = {
+    const newMedicalRecord = {
       id: Date.now().toString(),
       ...popUpInput,
     }
     
-    setPrescription(prev => [...prev, newPrescription])
+    const updatedMedicalRecord = [...medicalRecord, newMedicalRecord]
+
+    try{
+      await AsyncStorage.setItem('medicalRecord', JSON.stringify(updatedMedicalRecord))
+      setMedicalRecord(updatedMedicalRecord)
+      console.log('Data save successfully.')
+    }
+    catch(e){
+      console.log('Saving Error: ', e)
+    }
 
     setInput({ medical_record: '', vet: '', date: '', description: '' })
     setIsVisible(false)
   }
 
-  const handleDelete = (id: string) => {
-    setPrescription(prev => prev.filter(item => item.id !== id));
+  useEffect( () => {
+    const loadMedicalRecord = async () => {
+      try{
+        const storedMedicalRecord = await AsyncStorage.getItem('medicalRecord')
+        if(storedMedicalRecord)
+          setMedicalRecord(JSON.parse(storedMedicalRecord))
+        console.log('Data load successfully.')
+      }
+      catch(e){
+        console.log('Loading Error: ', e)
+      }
+    }
+    loadMedicalRecord()
+  },[])
+
+  const handleDelete = async (id: string) => {
+    try{
+      const updatedMedicalRecord = medicalRecord.filter(item => item.id !== id)
+      await AsyncStorage.setItem('medicalRecord', JSON.stringify(updatedMedicalRecord))
+      setMedicalRecord(updatedMedicalRecord)
+      console.log('Data delete successfully.')
+    }
+    catch(e){
+      console.log('Deleting Error: ', e)
+    }
   };
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
-      {prescription.map((item) => (
+      {medicalRecord.map((item) => (
         <View key={item.id} style={styles.record}>
           <View style={styles.recordTitleIconLeft}>
             <MaterialCommunityIcons name="pill" size={40} color="black" />
@@ -91,7 +124,7 @@ const Prescription = () => {
         <View style={styles.modalBackground}>
           <View style={styles.popUp}> 
             <View style={styles.popUpTitle}>
-              <Text style={styles.popUpTitleText}>Prescription</Text>
+              <Text style={styles.popUpTitleText}>Medical</Text>
             </View>
 
             <View style={styles.popUpContainer}>
@@ -255,4 +288,4 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
 })
-export default Prescription
+export default Medical

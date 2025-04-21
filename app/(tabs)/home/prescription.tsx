@@ -1,6 +1,7 @@
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PlatformPressable } from "@react-navigation/elements";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,7 +21,7 @@ const Prescription = () => {
     setInput(prev => ({...prev, [key]: value}))
   }
 
-  type PrescriptionRecord = {
+  type PrescriptionRecordType = {
     
     id: string;
     vaccine: string;
@@ -29,9 +30,9 @@ const Prescription = () => {
     date: string;
   };
 
-  const [prescription, setPrescription] = useState<PrescriptionRecord[]>([])
+  const [prescription, setPrescription] = useState<PrescriptionRecordType[]>([])
 
-  const handleSave = () => {
+  const handleSave = async () => {
 
     if(!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
@@ -42,15 +43,48 @@ const Prescription = () => {
       id: Date.now().toString(),
       ...popUpInput,
     }
-    
-    setPrescription(prev => [...prev, newPrescription])
+
+    // Create the updated array first
+    const updatedPrescriptions = [...prescription, newPrescription];
+
+    try{
+      await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(updatedPrescriptions))
+      setPrescription(updatedPrescriptions)
+      console.log('Data save successfully.')
+    }
+    catch(e){
+      console.log('Saving Error: ', e)
+    }
 
     setInput({ vaccine: '', vet: '', date: '', description: '' })
     setIsVisible(false)
   }
 
-  const handleDelete = (id: string) => {
-    setPrescription(prev => prev.filter(item => item.id !== id));
+  useEffect( () => {
+    const loadPrescription = async () => {
+      try{
+        const storedPrescription = await AsyncStorage.getItem('prescriptionRecord')
+        if(storedPrescription)
+          setPrescription(JSON.parse(storedPrescription))
+        console.log('Data load successfully.')
+      }
+      catch(e){
+        console.log('Loading Error', e)
+      }
+    }
+    loadPrescription()
+  },[])
+
+  const handleDelete = async (id: string) => {
+    try{
+      const updatedPrescriptions = prescription.filter(item => item.id !== id)
+      await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(updatedPrescriptions))
+      setPrescription(updatedPrescriptions)
+      console.log('Data delete successfully.')
+    }
+    catch(e){
+      console.log("Deleting Error: ", e)
+    }
   };
 
   return(
@@ -97,7 +131,7 @@ const Prescription = () => {
               <Text>Pills</Text>
               <TextInput
               style={styles.popUpInput}
-              placeholder="vaccine"
+              placeholder="Vaccine"
               value={popUpInput.vaccine}
               onChangeText={(text) => handleChange('vaccine', text)}
               />
