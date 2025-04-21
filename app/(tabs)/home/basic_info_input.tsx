@@ -1,27 +1,53 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const UserInput = () => {
 
-    const [input, setInput] = useState({
+  const [input, setInput] = useState({
+    name:'',
+    birthdate:'',
+    species:'',
+    breed:'',
+    sex:'',
+    weight:'',
+  })
 
-        name:'',
-        birthdate:'',
-        species:'',
-        breed:'',
-        sex:'',
-        weight:'',
-    })
+  useEffect( () => {
+    const loadPetInfoFromStorage = async () => {
+      try{
+        const storedInfo = await AsyncStorage.getItem('pet_info')
+        if(storedInfo)
+          setInput(JSON.parse(storedInfo))
+        console.log('Data load successfully')
+      }
+      catch(e){
+        console.log('Loading Error: ', e)
+      }
+    }
+    loadPetInfoFromStorage()
+  },[])
+      
+  const savePetInfoToStorage = async () => {
+    try {
+      await AsyncStorage.setItem('pet_info', JSON.stringify(input)) // save your object, without await, the code would continue before the fetch is complete, which would cause bugs or empty results.
+      router.back()
+      console.log('Data saved to AsyncStorage!') // wait until the data is saved before printing
+    } 
+    catch (e) {
+      console.error('Saving error:', e)
+    }
+  }
 
-    const handleChange = (key:string, value:string) => {
-        setInput(prev => ({ ...prev, [key]: value }));
-    };
+  const handleChange = (key:string, value:string) => {
+    setInput(prev => ({ ...prev, [key]: value }));
+  };
 
   return(
 
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
-      <ScrollView>
 
         <View style={styles.container}>
             <Text>Name:</Text>
@@ -77,7 +103,11 @@ const UserInput = () => {
                 onChangeText={(text) => handleChange('weight', text)}
                 />
         </View>
-      </ScrollView>
+
+      <Pressable onPress={savePetInfoToStorage}>
+        <Text>Save</Text>
+      </Pressable>
+
     </SafeAreaView>
   )
 }

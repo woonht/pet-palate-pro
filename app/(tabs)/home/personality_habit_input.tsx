@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const UserInput = () => {
-
     const [input, setInput] = useState({
 
         temperament:'',
@@ -16,10 +17,36 @@ const UserInput = () => {
         setInput(prev => ({ ...prev, [key]: value }));
     };
 
+    const savePetPersonalityHabitToStorage = async () => {
+
+      try{
+        await AsyncStorage.setItem('pet_personality_habit', JSON.stringify(input))
+        router.back()
+        console.log('Data saved to Asyncstorage')
+      }
+      catch(e){
+        console.log('Saving Error: ', e)
+      }
+    }
+
+    useEffect( () => {
+      const loadPetPersonalityHabit = async () => {
+        try{
+          const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
+          if(storedPersonalityHabit)
+            setInput(JSON.parse(storedPersonalityHabit))
+          console.log('Data load successfully')
+        }
+        catch(e){
+          console.log('Loading Error: ', e)
+        }
+      }
+      loadPetPersonalityHabit()
+    },[])
+
   return(
 
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
-      <ScrollView>
 
         <View style={styles.container}>
             <Text>Temperament:</Text>
@@ -57,7 +84,11 @@ const UserInput = () => {
                 onChangeText={(text) => handleChange('dislike', text)}
                 />
         </View>        
-      </ScrollView>
+
+        <Pressable onPress={savePetPersonalityHabitToStorage}>
+          <Text>Save</Text>
+        </Pressable>
+
     </SafeAreaView>
   )
 }
