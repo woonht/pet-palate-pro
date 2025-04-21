@@ -1,66 +1,91 @@
 import { FontAwesome, FontAwesome5, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const Profile = () => {
 
-  return(
-    <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
-        
-        <View style={styles.basic_info}>
-            <Image source={require('../../../assets/images/golden.jpg')} style={styles.image}/>
-            <View style={styles.columnText}>
-                <Pressable onPress={ ()=> router.push('/(tabs)/home/basic_info') }>
-                    <View style={styles.to_basic_info}>
-                        <Text>Basic Info</Text> 
-                        <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+    const [basic_info, setBasicInfo] = useState({   
+      name:'',
+      birthdate:'',
+      species:'',
+      sex:'',
+      weight:'',
+    })
+    
+    useFocusEffect(
+        useCallback( () => {
+            const loadPetInfo = async () => {
+                try{
+                    const storedInfo = await AsyncStorage.getItem('pet_info')
+                    if(storedInfo)
+                        setBasicInfo(JSON.parse(storedInfo))
+                    console.log('Data load successfully.')
+                }
+                catch(e){
+                    console.log('Loading Error: ', e)
+                }
+            }
+            loadPetInfo()
+        },[]))
+
+    return(
+        <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
+            
+            <View style={styles.basic_info}>
+                <Image source={require('../../../assets/images/golden.jpg')} style={styles.image}/>
+                <View style={styles.columnText}>
+                    <Pressable onPress={ ()=> router.push('/(tabs)/home/basic_info') }>
+                        <View style={styles.to_basic_info}>
+                            <Text style={{fontWeight: 'bold', fontSize: 24}}>{basic_info.name}</Text> 
+                            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+                        </View>
+                    </Pressable>
+                    <View style={styles.rowText}>
+                        <View style={styles.IconTextLeft}>
+                            <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
+                            <Text>{basic_info.sex}</Text>
+                        </View>
+                        <View style={styles.IconTextLeft}>
+                            <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
+                            <Text>{basic_info.birthdate}</Text>
+                        </View>
                     </View>
-                </Pressable>
-                <View style={styles.rowText}>
-                    <View style={styles.IconTextLeft}>
-                        <MaterialCommunityIcons name="gender-male-female" size={24} color="black" />
-                        <Text>Male</Text>
-                    </View>
-                    <View style={styles.IconTextLeft}>
-                        <FontAwesome name="birthday-cake" size={24} color="black" />
-                        <Text>1-1-2020</Text>
-                    </View>
-                </View>
-                <View style={styles.rowText}>
-                    <View style={styles.IconTextLeft}>
-                        <MaterialCommunityIcons name="dna" size={24} color="black" />
-                        <Text>Golden Retriever</Text>
-                    </View>
-                    <View style={styles.IconTextLeft}>
-                        <FontAwesome5 name="weight" size={24} color="black" />
-                        <Text>30kg</Text>
+                    <View style={styles.rowText}>
+                        <View style={styles.IconTextLeft}>
+                            <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />
+                            <Text>{basic_info.species}</Text>
+                        </View>
+                        <View style={styles.IconTextLeft}>
+                            <FontAwesome5 name="weight" size={24} color="#AA4600" />
+                            <Text>{basic_info.weight}</Text>
+                        </View>
                     </View>
                 </View>
             </View>
-        </View>
-        
-        <Pressable onPress={ ()=> router.push('/(tabs)/home/medical_record') }>
-            <View style={styles.medical_record}>
-                <View style={styles.IconTextLeft}>
-                    <FontAwesome5 name="book-medical" size={24} color="black" />
-                    <Text>Medical Record</Text>
-                </View> 
-                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </View>            
-        </Pressable>
+            
+            <Pressable onPress={ ()=> router.push('/(tabs)/home/medical_record') }>
+                <View style={styles.medical_record}>
+                    <View style={styles.IconTextLeft}>
+                        <FontAwesome5 name="book-medical" size={24} color="#AA4600" />
+                        <Text>Medical Record</Text>
+                    </View> 
+                    <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+                </View>            
+            </Pressable>
 
-        <Pressable onPress={ ()=> router.push('/(tabs)/home/prescription') }>
-            <View style={styles.prescription}>
-                <View style={styles.IconTextLeft}>
-                    <MaterialCommunityIcons name="pill" size={24} color="black" />
-                    <Text>Presciption</Text>
-                </View> 
-                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </View>            
-        </Pressable>
-    </SafeAreaView>
+            <Pressable onPress={ ()=> router.push('/(tabs)/home/prescription') }>
+                <View style={styles.prescription}>
+                    <View style={styles.IconTextLeft}>
+                        <MaterialCommunityIcons name="pill" size={24} color="#AA4600" />
+                        <Text>Prescription</Text>
+                    </View> 
+                    <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+                </View>            
+            </Pressable>
+        </SafeAreaView>
   )
 }
 
