@@ -1,6 +1,6 @@
 const { app } = require('@azure/functions');
 
-app.http('SavePetData', {
+app.http('GetPetPersonalityHabit', {
     methods: ['GET', 'POST'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
