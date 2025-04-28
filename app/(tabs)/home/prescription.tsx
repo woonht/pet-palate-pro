@@ -32,7 +32,7 @@ const Prescription = () => {
 
   const [prescription, setPrescription] = useState<PrescriptionRecordType[]>([])
 
-  const handleSave = async () => {
+  const saveToStorage = async () => {
 
     if(!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
@@ -85,7 +85,77 @@ const Prescription = () => {
     catch(e){
       console.log("Deleting Error: ", e)
     }
-  };
+  }
+
+  const saveToDatabase = async () => {
+    if (!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date) {
+      Alert.alert("Error", "Please fill in all required fields")
+      return
+    }
+  
+    const dataToSend = {
+      ...popUpInput,
+      petId: "123", // You might want to get this from AsyncStorage or props
+      id: Date.now().toString(), // Generate unique ID if not editing existing
+      formType: 'prescription'
+    }
+  
+    try {
+      await saveToStorage()
+      const response = await fetch("https://appinput.azurewebsites.net/api/SavePetPrescription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSend),
+      })
+    
+      const text = await response.text() // log raw text for debugging
+      console.log("Raw response:", text)
+    
+      if (!response.ok) {
+        throw new Error(text || 'Failed to save prescription')
+      }
+    
+      const result = JSON.parse(text)
+      console.log("Saved to database:", result)
+      
+    } catch (e) {
+      console.error("Failed to save prescription:", e)
+    }
+  }
+  
+  const loadFromDatabase = async () => {
+    const petId = "123"; // You might want to get this from AsyncStorage or props
+  
+    try {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?petId=${petId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+  
+      // Check if response is OK before parsing
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to load prescriptions')
+      }
+  
+      const result = await response.json()
+      console.log("Prescriptions loaded:", result)
+  
+      if (result && Array.isArray(result)) {
+        setPrescription(result)
+        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
+      } else if (result && typeof result === "object") {
+        const prescriptionsArray = [result]
+        setPrescription(prescriptionsArray)
+        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
+      } else {
+        throw new Error('Invalid response format')
+      }
+    } 
+    catch (e) {
+      console.error("Error loading prescriptions from database:", e)
+    }
+  }
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
@@ -174,7 +244,7 @@ const Prescription = () => {
                                   }>
                 <Text>Cancel</Text>
               </Pressable>
-              <Pressable onPress={ () => handleSave()}>
+              <Pressable onPress={ () => saveToDatabase()}>
                 <Text>Save</Text>
               </Pressable>
             </View>

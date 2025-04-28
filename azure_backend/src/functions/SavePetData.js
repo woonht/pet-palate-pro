@@ -4,13 +4,13 @@ const { CosmosClient } = require("@azure/cosmos");
 const endpoint = process.env.COSMOS_URI;
 const key = process.env.COSMOS_KEY;
 const dbName = process.env.COSMOS_DB_NAME;
-const client = new CosmosClient({ endpoint, key }); //used to interact with the database (read/write operations)
+const client = new CosmosClient({ endpoint, key }); //used to interact with the database (read/write operations), endpoint specific where is the db, key means i am allowed to access
 
 app.http('SavePetData', {
     methods: ['POST'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
-        context.log(`Http function processed request for url "${request.url}"`);
+        context.log('SavePetData triggered');
 
         const data = await request.json();
 
@@ -21,24 +21,20 @@ app.http('SavePetData', {
             };
         }
 
-        const containerName = {
-            basic_info: "BasicInfo",
-            personality_habit: "PersonalityHabit",
-            medical_record: "MedicalRecord",
-            prescription: "Prescription"
-        }[data.formType];
-
-        if (!containerName) {
+        if (data.formType !== "basic_info") {
             return {
                 status: 400,
-                body: JSON.stringify({ error: "Invalid formType value." }),
+                body: JSON.stringify({ error: "Invalid formType. Only 'basic_info' is allowed." }),
             };
         }
 
         const database = client.database(dbName);
-        const container = database.container(containerName);
+        const container = database.container("BasicInfo");
 
-        const itemToSave = { ...data };
+        const itemToSave = { 
+            ...data,
+            timestamp: new Date().toISOString() 
+        };
 
         try {
             let resource;

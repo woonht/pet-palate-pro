@@ -45,6 +45,80 @@ const UserInput = () => {
     setInput(prev => ({ ...prev, [key]: value }));
   };
 
+  const savePetInfoToDatabase = async () => {
+    const dataToSend = {
+      ...input,
+      petId: "123",
+      formType: "basic_info"  //choose either "basic_info", "medical_record", "personality_habit", "prescription"
+    }
+
+    try {
+      await savePetInfoToStorage()
+      const response = await fetch("https://appinput.azurewebsites.net/api/SavePetData?", { //fetch() is used to make a network request to the Azure Function backend, await until the backend respond
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSend),  
+      });
+  
+      const result = await response.json()
+      console.log("Saved:", result)
+      console.log("Success", "Pet info saved to database.")
+    } 
+    catch (e) {
+      console.log(dataToSend)
+      console.log("Failed to save data.: ", e)
+    }
+  }
+
+  const loadPetInfoFromDatabase = async () => {  
+    try {
+      const response = await fetch('https://appinput.azurewebsites.net/api/GetPetData?formType=basic_info&petId=123', {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+  
+      const text = await response.text() // Read raw response
+      console.log("Raw response text:", text) // Debug what was returned
+  
+      if (!text) {
+        console.warn("Empty response received from backend.")
+        return
+      }
+  
+      const result = JSON.parse(text) // Only parse if not empty
+
+      if (result.error) {
+        console.warn("Server responded with error:", result.error)
+        return
+      }
+  
+      if (result && typeof result === "object") {
+        setInput({
+          name: result.name || '',
+          birthdate: result.birthdate || '',
+          species: result.species || '',
+          breed: result.breed || '',
+          sex: result.sex || '',
+          weight: result.weight || '',
+        })
+        console.log("Pet info loaded:", result)
+      }
+  
+    } catch (e) {
+      console.error("Error loading pet info from database:", e)
+    }
+  }
+
+  const empty = () => {
+    setInput({    
+      name:'',
+      birthdate:'',
+      species:'',
+      breed:'',
+      sex:'',
+      weight:'',})
+  }
+
   return(
 
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
@@ -104,8 +178,14 @@ const UserInput = () => {
                 />
         </View>
 
-      <Pressable onPress={savePetInfoToStorage}>
+      <Pressable onPress={savePetInfoToDatabase}>
         <Text>Save</Text>
+      </Pressable>
+      <Pressable onPress={loadPetInfoFromDatabase}>
+        <Text>Load from Database</Text>
+      </Pressable>
+      <Pressable onPress={empty}>
+        <Text>Empty</Text>
       </Pressable>
 
     </SafeAreaView>

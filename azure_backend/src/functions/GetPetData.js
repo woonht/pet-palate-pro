@@ -21,15 +21,12 @@ app.http('GetPetData', {
                 body: JSON.stringify({ error: "Missing formType or userId in query parameters." }),
             };
         }
-
-        const containerName = {
-            basic_info: "BasicInfo",
-            personality_habit: "PersonalityHabit",
-            medical_record: "MedicalRecord",
-            prescription: "Prescription"
-        }[formType];
-
-        if (!containerName) {
+        
+        let containerName;
+        if (formType == "basic_info") {
+            containerName = "BasicInfo";
+        }
+        else{
             return {
                 status: 400,
                 body: JSON.stringify({ error: "Invalid formType value." }),
