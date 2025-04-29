@@ -13,7 +13,6 @@ const StackLayout = () => {
                               
                             }}>
           <Stack.Screen name='settings' options={{title:'Settings'}}/>
-          <Stack.Screen name='notification' options={{title:'Notification'}}/>
           <Stack.Screen name='automated_schedule' options={{title:'Automated Scheduling'}}/>
       </Stack>
     </GestureHandlerRootView>

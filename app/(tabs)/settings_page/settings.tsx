@@ -13,6 +13,10 @@ const SettingsPage = () => {
   const [isDog, setIsDog] = useState(false)
   const [count, setCount] = useState(1)
 
+  const logout = () => {
+    router.replace('/(tabs)/auth/sign_in')
+  }
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
 
@@ -144,7 +148,7 @@ const SettingsPage = () => {
           </View>            
         </View>
         
-        <Pressable>
+        <Pressable onPress={logout}>
           <View style={styles.rowSettings}>
             <View style={styles.IconTextLeft}>
               <MaterialCommunityIcons name="logout" size={24} color="red" />
