@@ -15,11 +15,17 @@ app.http('SavePetPrescription', {
 
     try {
       const prescriptionData = await request.json();
-      context.log('Received prescriptionData:', prescriptionData);
 
       // Validate required fields
       const requiredFields = ['petId', 'vaccine', 'vet', 'date'];
       const missingFields = requiredFields.filter(field => !prescriptionData[field]);
+
+      if (!prescriptionData || !prescriptionData.formType){
+        return{
+          status:400,
+          body:JSON.stringify({error: 'Missing formType in request body.'})
+        };
+      }
 
       if (missingFields.length > 0) {
         return {
@@ -59,10 +65,10 @@ app.http('SavePetPrescription', {
       };
     } 
     catch (error) {
-      context.log.error('Error saving prescription:', error.message);
+      context.log.error('Error saving prescription to Cosmos DB:', error);
       return {
         status: 500,
-        body: JSON.stringify({ error: error.message || 'Unknown server error' }),
+        body: JSON.stringify({ error: "Failed to save data."}),
       };
     }
   }

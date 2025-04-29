@@ -11,38 +11,39 @@ app.http('SavePetData', {
     authLevel: 'anonymous',
     handler: async (request, context) => {
         context.log('SavePetData triggered');
-
-        const data = await request.json();
-
-        if (!data || !data.formType) {
-            return {
-                status: 400,
-                body: JSON.stringify({ error: "Missing formType in request body." }),
-            };
-        }
-
-        if (data.formType !== "basic_info") {
-            return {
-                status: 400,
-                body: JSON.stringify({ error: "Invalid formType. Only 'basic_info' is allowed." }),
-            };
-        }
-
-        const database = client.database(dbName);
-        const container = database.container("BasicInfo");
-
-        const itemToSave = { 
-            ...data,
-            timestamp: new Date().toISOString() 
-        };
-
+        
         try {
+            const data = await request.json();
+
+            if (!data || !data.formType) {
+                return {
+                    status: 400,
+                    body: JSON.stringify({ error: "Missing formType in request body." }),
+                };
+            }
+
+            if (data.formType !== "basic_info") {
+                return {
+                    status: 400,
+                    body: JSON.stringify({ error: "Invalid formType. Only 'basic_info' is allowed." }),
+                };
+            }
+
+            const database = client.database(dbName);
+            const container = database.container("BasicInfo");
+
+            const itemToSave = { 
+                ...data,
+                timestamp: new Date().toISOString() 
+            };
+
             let resource;
             if (itemToSave.id) {
                 // If ID exists, try to upsert (update or insert) the document
                 const { resource: updatedResource } = await container.items.upsert(itemToSave);
                 resource = updatedResource;
-            } else {
+            } 
+            else {
                 // If no ID, create a new document
                 const { resource: createdResource } = await container.items.create(itemToSave);
                 resource = createdResource;
@@ -53,7 +54,7 @@ app.http('SavePetData', {
                 body: JSON.stringify(resource),
             };
         } catch (error) {
-            context.log.error("Error saving to Cosmos DB:", error);
+            context.log.error("Error saving pet data to Cosmos DB:", error);
             return {
                 status: 500,
                 body: JSON.stringify({ error: "Failed to save data." }),
