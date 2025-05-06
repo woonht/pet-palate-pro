@@ -2,6 +2,7 @@ import { router } from "expo-router"
 import React, { useState } from "react"
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import 'expo-dev-client'
 
 const SignIn = () => {
 
@@ -27,7 +28,7 @@ const SignIn = () => {
     return(
         <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
             <View style={styles.icon_and_text}>
-                <Image source={require('../../../assets/images/Icon.png')} style={styles.icon}/>
+                <Image source={require('../../../assets/images/icon.png')} style={styles.icon}/>
                 <Text style={styles.title_text}>Pet Palate Pro</Text>
             </View>
             <View style={styles.sign_in_info}>
@@ -57,6 +58,15 @@ const SignIn = () => {
             <Pressable onPress={signUp} style={styles.sign_up_button}>
                 <Text style={styles.login_signup_text}>Sign Up</Text>
             </Pressable>
+            <View>
+                <Text style={styles.option_text}>--------------------or--------------------</Text>
+            </View>
+                <Pressable style={styles.google_sign_up_button}>
+                    <View style={styles.google_sign_up}>
+                        <Image source={require('../../../assets/images/google.png')} style={styles.google_icon}/>
+                        <Text style={styles.google_sign_up_text}>Login with Google</Text>
+                    </View>
+                </Pressable>
         </SafeAreaView>
     )
 }
@@ -150,8 +160,48 @@ const styles = StyleSheet.create({
         backgroundColor: '#AA4600',
         padding: 5,
         margin: 30,
+        marginBottom: 20,
         borderRadius: 25,
         width: '90%',
+    },
+
+    google_sign_up_button: {
+        
+        backgroundColor: 'white',
+        padding: 10,
+        marginTop: 20,
+        width: '90%',
+        borderWidth: 1,
+        borderColor: '#D9D9D9',
+        borderRadius: 25,
+    },
+    
+    google_sign_up: {
+
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems:'center',
+        paddingHorizontal: 10,
+    },
+
+    google_icon: {
+
+        width: 25,
+        height: 25,
+        position: 'absolute',
+        left: 10,
+    },
+
+    google_sign_up_text: {
+        
+        fontSize: 16,
+        fontWeight: '500',
+    },
+
+    option_text: {
+
+        fontSize: 16,
+        color: 'grey',
     },
 })
 

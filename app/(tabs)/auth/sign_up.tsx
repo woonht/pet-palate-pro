@@ -1,6 +1,6 @@
 import { router } from "expo-router"
 import React, { useState } from "react"
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 const SignUp = () => {
@@ -60,6 +60,15 @@ const SignUp = () => {
                     <Text style={styles.to_login_text}>Log in</Text>
                 </Pressable>
             </View>
+            <View>
+                <Text style={styles.option_text}>--------------------or--------------------</Text>
+            </View>
+                <Pressable style={styles.google_sign_up_button}>
+                    <View style={styles.google_sign_up}>
+                        <Image source={require('../../../assets/images/google.png')} style={styles.google_icon}/>
+                        <Text style={styles.google_sign_up_text}>Login with Google</Text>
+                    </View>
+                </Pressable>
         </SafeAreaView>
     )
 }
@@ -126,6 +135,46 @@ const styles = StyleSheet.create({
     to_login_text: {
 
         color: 'blue',
+    },
+    
+    google_sign_up_button: {
+        
+        backgroundColor: 'white',
+        padding: 10,
+        marginTop: 20,
+        width: '90%',
+        borderWidth: 1,
+        borderColor: '#D9D9D9',
+        borderRadius: 25,
+    },
+    
+    google_sign_up: {
+
+        flexDirection:'row',
+        justifyContent: 'center',
+        alignItems:'center',
+        paddingHorizontal: 10,
+    },
+
+    google_icon: {
+
+        width: 25,
+        height: 25,
+        position: 'absolute',
+        left: 10,
+    },
+
+    google_sign_up_text: {
+        
+        fontSize: 16,
+        fontWeight: '500',
+    },
+
+    option_text: {
+
+        fontSize: 16,
+        color: 'grey',
+        marginTop: 20,
     },
 })
 
