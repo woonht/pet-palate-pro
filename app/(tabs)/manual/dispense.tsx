@@ -1,16 +1,26 @@
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons";
 import { PlatformPressable } from "@react-navigation/elements";
+import { router } from "expo-router";
 import React from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const SettingsPage = () => {
+const FoodDispense = () => {
 
   return(
-    <SafeAreaView edges={['top', 'bottom']} style={[styles.button, styles.whole_page]}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
+      <View style={styles.container}>
+        <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') }>
+          <View style={styles.IconTextLeft}>
+            <Text>Dispense Logs</Text>
+            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+          </View>
+        </PlatformPressable>
+      </View>
       <PlatformPressable 
       onPress={() => Alert.alert('Food Dispense')}
-      android_ripple={{ color:null }}>
+      android_ripple={{ color:null }}
+      style={styles.button}>
         <AntDesign name="pluscircle" size={150} color="#AA4600"/>
       </PlatformPressable>
     </SafeAreaView>
@@ -23,7 +33,25 @@ const styles = StyleSheet.create({
 
     flex: 1,
     backgroundColor: '#FFF7ED',
-},
+    alignItems:'center',
+    paddingTop: 20,
+  },
+
+  container: {
+
+    backgroundColor: 'white',
+    borderRadius: 25,
+    width: '90%',
+    paddingInline: 20,
+    padding: 15,
+  },
+
+  IconTextLeft: {
+    
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent:'space-between'    
+  },
 
   button: {
     
@@ -32,4 +60,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   }
 })
-export default SettingsPage
+export default FoodDispense

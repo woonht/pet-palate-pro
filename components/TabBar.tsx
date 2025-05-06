@@ -14,7 +14,7 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const routeName = getFocusedRouteNameFromRoute(focusedRoute) ?? focusedRoute.name;
   
   const hiddenTabScreens = ['basic_info', 'basic_info_input', 'personality_habit_input', 
-                            'medical_record', 'prescription', 
+                            'medical_record', 'prescription', 'log',
                             'notification', 'automated_schedule',
                             'auth/sign_in', 'auth/sign_up'];
   

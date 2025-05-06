@@ -10,6 +10,7 @@ const StackLayout = () => {
                           },
                         }}>
         <Stack.Screen name='dispense' options={{title:'Manual Food Dispensing'}}/>
+        <Stack.Screen name='log' options={{title:'Dispense Logs'}}/>
     </Stack>
   )
 }

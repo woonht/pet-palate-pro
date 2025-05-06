@@ -79,7 +79,7 @@ const BasicInfo = () => {
                   <MaterialCommunityIcons name="tag-text" size={24} color="black" />                  
                   <View>
                     <Text style={styles.basic_info}>Name</Text>
-                    <Text>{basic_info.name}</Text>
+                    <Text>{basic_info.name || 'Bobby'}</Text>
                   </View>
                 </View>
               </View>
@@ -89,7 +89,7 @@ const BasicInfo = () => {
                   <FontAwesome name="birthday-cake" size={24} color="black" />
                   <View>
                     <Text style={styles.basic_info}>Birthdate</Text>
-                    <Text>{basic_info.birthdate}</Text>
+                    <Text>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
                   </View>
                 </View>
               </View>
@@ -102,7 +102,7 @@ const BasicInfo = () => {
                   <MaterialCommunityIcons name="dna" size={24} color="black" />                
                   <View>
                     <Text style={styles.basic_info}>Species</Text>
-                    <Text>{basic_info.species}</Text>
+                    <Text>{basic_info.species || 'Dog'}</Text>
                   </View>
                 </View>
               </View>
@@ -112,7 +112,7 @@ const BasicInfo = () => {
                   <FontAwesome5 name="dog" size={24} color="black" />
                   <View>
                     <Text style={styles.basic_info}>Breed</Text>
-                    <Text>{basic_info.breed}</Text>
+                    <Text>{basic_info.breed || 'Golden Retriever'}</Text>
                   </View>
                 </View>
               </View>
@@ -125,7 +125,7 @@ const BasicInfo = () => {
                   <MaterialCommunityIcons name="gender-male-female" size={24} color="black" />
                   <View>
                     <Text style={styles.basic_info}>Sex</Text>
-                    <Text>{basic_info.sex}</Text>
+                    <Text>{basic_info.sex || 'Male'}</Text>
                   </View>
                 </View>
               </View>
@@ -135,7 +135,7 @@ const BasicInfo = () => {
                   <FontAwesome5 name="weight" size={24} color="black" />
                   <View>
                     <Text style={styles.basic_info}>Weight</Text>
-                    <Text>{basic_info.weight}</Text>
+                    <Text>{basic_info.weight || '0 kg'}</Text>
                   </View>
                 </View>
               </View>
@@ -158,28 +158,28 @@ const BasicInfo = () => {
               <FontAwesome5 name="list-alt" size={24} color="black" />
               <View>
                 <Text style={styles.basic_info}>Temperament</Text>
-                <Text>{personality_habit.temperament}</Text>
+                <Text>{personality_habit.temperament || 'Friendly'}</Text>
               </View>
             </View>
             <View style={styles.textIcon}>
               <FontAwesome name="book" size={24} color="black" />
               <View>
                 <Text style={styles.basic_info}>Skills</Text>
-                <Text>{personality_habit.skills}</Text>
+                <Text>{personality_habit.skills || 'Hand Shake'}</Text>
               </View>
             </View>
             <View style={styles.textIcon}>
               <Ionicons name="heart" size={24} color="black" />
               <View>
                 <Text style={styles.basic_info}>Like</Text>
-                <Text>{personality_habit.like}</Text>
+                <Text>{personality_habit.like || 'Walk in park'}</Text>
               </View>
             </View>
             <View style={styles.textIcon}>
               <Ionicons name="heart-dislike" size={24} color="black" />
               <View>
                 <Text style={styles.basic_info}>Dislike</Text>
-                <Text>{personality_habit.dislike}</Text>
+                <Text>{personality_habit.dislike || 'Thunder'}</Text>
               </View>
             </View>
           </View>

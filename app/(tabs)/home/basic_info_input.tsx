@@ -48,7 +48,6 @@ const UserInput = () => {
   const savePetInfoToDatabase = async () => {
     const dataToSend = {
       ...input,
-      petId: "123",
       formType: "basic_info"  //choose either "basic_info", "medical_record", "personality_habit", "prescription"
     }
 
@@ -127,7 +126,7 @@ const UserInput = () => {
             <Text>Name:</Text>
             <TextInput
                 style={styles.input}
-                placeholder="Enter your name"
+                placeholder="Enter pet's name"
                 value={input.name}
                 onChangeText={(text) => handleChange('name', text)}
                 />

@@ -39,28 +39,28 @@ const Profile = () => {
                 <View style={styles.columnText}>
                     <Pressable onPress={ ()=> router.push('/(tabs)/home/basic_info') }>
                         <View style={styles.to_basic_info}>
-                            <Text style={{fontWeight: 'bold', fontSize: 24}}>{basic_info.name}</Text> 
+                            <Text style={{fontWeight: 'bold', fontSize: 24}}>{basic_info.name || 'Name'}</Text> 
                             <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
                         </View>
                     </Pressable>
                     <View style={styles.rowText}>
                         <View style={styles.IconTextLeft}>
                             <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
-                            <Text>{basic_info.sex}</Text>
+                            <Text>{basic_info.sex || 'Sex'}</Text>
                         </View>
                         <View style={styles.IconTextLeft}>
                             <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
-                            <Text>{basic_info.birthdate}</Text>
+                            <Text>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
                         </View>
                     </View>
                     <View style={styles.rowText}>
                         <View style={styles.IconTextLeft}>
                             <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />
-                            <Text>{basic_info.species}</Text>
+                            <Text>{basic_info.species || 'Species'}</Text>
                         </View>
                         <View style={styles.IconTextLeft}>
                             <FontAwesome5 name="weight" size={24} color="#AA4600" />
-                            <Text>{basic_info.weight}</Text>
+                            <Text>{basic_info.weight || '0 kg'}</Text>
                         </View>
                     </View>
                 </View>
