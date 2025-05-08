@@ -58,9 +58,9 @@
         console.log('enable: ', enable)
         console.log('Notification enable')
 
-        const { status: existingStatus } = await Notifications.getPermissionsAsync(); //checks whether the app already has permission to send notifications
+        const { status: existingStatus } = await Notifications.getPermissionsAsync(); // checks whether the app already has permission to send notifications
         if (existingStatus !== 'granted') {
-          const { status } = await Notifications.requestPermissionsAsync(); //asks for permission if not already granted
+          const { status } = await Notifications.requestPermissionsAsync(); // asks for permission if not already granted, popup (only appear the first time)
           if (status !== 'granted') {
             alert('Please allow Pet Palate Pro to send you notifications');
           }
