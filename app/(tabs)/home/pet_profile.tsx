@@ -82,7 +82,7 @@ const Profile = () => {
         }
     }
 
-    useEffect(() => {
+    useEffect(() => { //useEffect only runs once and will not run again if the component is kept in memory (using expo router), eg. pet_profile -> basic_info -> pet_profile, update in basic_info will not update pet_profile because pet_profile is kept in memory
         const loadPetImage = async () => {
             try{
                 const storedImage = await AsyncStorage.getItem('pet_image')
@@ -98,7 +98,7 @@ const Profile = () => {
         loadPetImage()
     }, [])
     
-    useFocusEffect( 
+    useFocusEffect( // useFocusEffect runs everytime when navigated to the page regardless the component is kept in memory anot, eg. pet_profile -> basic_info -> pet_profile, update in basic_info will update pet_profile
         useCallback( () => {
             const loadPetInfo = async () => {
                 try{

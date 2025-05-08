@@ -1,6 +1,6 @@
-import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useState } from "react";
+import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import { Modal, StyleSheet, TouchableOpacity } from "react-native";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -8,8 +8,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const SettingsPage = () => {
 
   const [isModeVisible, setModeIsVisible] = useState(false)
+  const [descriptionVisible, setDescriptionVisible] = useState(false)
   const [isDog, setIsDog] = useState(false)
   const [count, setCount] = useState(1)
+
+  useFocusEffect( // Auto-hide when navigating away from this screen
+    useCallback(() => {
+      return () => setDescriptionVisible(false); // Called when screen loses focus
+    }, [])
+  )
 
   const logout = () => {
     router.replace('/(tabs)/auth/sign_in')
@@ -104,8 +111,17 @@ const SettingsPage = () => {
             <Pressable onPress={()=> setCount(count<12 ? count+1 : 12)}>
                 <FontAwesome name="plus-square" size={24} color="black" />
             </Pressable>
-          </View>            
+            <Pressable onPress={ () => setDescriptionVisible(!descriptionVisible)}>
+              <Octicons name="question" size={24} color="#D3D3D3" />
+            </Pressable>
+          </View> 
         </View>
+
+        {descriptionVisible && (
+          <View style={styles.description}>
+            <Text>ajdjsjdlka</Text>
+          </View>
+        )}
         
         <Pressable onPress={logout}>
           <View style={styles.rowSettings}>
@@ -179,6 +195,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     padding: 5,
+  },
+
+  description: {
+
+    backgroundColor:'#D3D3D3',
+    paddingHorizontal: 10,
+    padding: 5,
+    borderRadius: 15,
   },
 })
 export default SettingsPage
