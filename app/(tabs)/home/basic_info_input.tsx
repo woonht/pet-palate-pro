@@ -71,7 +71,7 @@ const UserInput = () => {
 
   const loadPetInfoFromDatabase = async () => {  
     try {
-      const response = await fetch('https://appinput.azurewebsites.net/api/GetPetData?formType=basic_info&petId=123', {
+      const response = await fetch('https://appinput.azurewebsites.net/api/GetPetData', {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       })

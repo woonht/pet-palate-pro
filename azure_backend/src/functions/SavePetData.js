@@ -18,6 +18,7 @@ app.http('SavePetData', {
             if (!data || !data.formType) {
                 return {
                     status: 400,
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ error: "Missing formType in request body." }),
                 };
             }
@@ -25,6 +26,7 @@ app.http('SavePetData', {
             if (data.formType !== "basic_info") {
                 return {
                     status: 400,
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ error: "Invalid formType. Only 'basic_info' is allowed." }),
                 };
             }
@@ -51,12 +53,14 @@ app.http('SavePetData', {
             
             return {
                 status: 200,
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(resource),
             };
         } catch (error) {
             context.log.error("Error saving pet data to Cosmos DB:", error);
             return {
                 status: 500,
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ error: "Failed to save data." }),
             };
         }
