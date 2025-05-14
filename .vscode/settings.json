@@ -4,5 +4,6 @@
     "azureFunctions.projectLanguage": "JavaScript",
     "azureFunctions.projectRuntime": "~4",
     "azureFunctions.projectLanguageModel": 4,
-    "azureFunctions.preDeployTask": "npm prune (functions)"
+    "azureFunctions.preDeployTask": "npm prune (functions)",
+    "cmake.sourceDirectory": "D:/pet-palate-pro/node_modules/expo-modules-core/android"
 }

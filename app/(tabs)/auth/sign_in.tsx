@@ -1,13 +1,24 @@
 import { router } from "expo-router"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import 'expo-dev-client'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
+import { useAuth } from "@/app/auth_context"
+import Toast from 'react-native-toast-message'
 
 const SignIn = () => {
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const { setUser } = useAuth()
+
+    useEffect(() => {
+        GoogleSignin.configure({
+        webClientId: '637482238294-n5ds4ua9tsu6m2tlpo407v2cuk60dv8k.apps.googleusercontent.com',
+        offlineAccess: true,
+        })
+    }, [])
 
     
     const login = () => {
@@ -23,6 +34,26 @@ const SignIn = () => {
     const signUp = () => {
 
         router.push('/(tabs)/auth/sign_up')
+    }
+
+    const signInWithGoogle = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const result = await GoogleSignin.signIn();
+            if (result.type === 'success') {
+                setUser(result.data); // save user globally
+            }
+            router.push('/(tabs)/home/pet_profile')
+            Toast.show({
+                type: 'success',
+                text1: 'Signed in successfully',
+            })
+            console.log('Google sign in successful.')
+            console.log(result)
+        } 
+        catch (e) {
+            console.error(e);
+        }
     }
 
     return(
@@ -61,7 +92,7 @@ const SignIn = () => {
             <View>
                 <Text style={styles.option_text}>--------------------or--------------------</Text>
             </View>
-                <Pressable style={styles.google_sign_up_button}>
+                <Pressable style={styles.google_sign_up_button} onPress={ () => signInWithGoogle() }>
                     <View style={styles.google_sign_up}>
                         <Image source={require('../../../assets/images/google.png')} style={styles.google_icon}/>
                         <Text style={styles.google_sign_up_text}>Login with Google</Text>

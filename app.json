@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.woonht.petpalatepro"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +33,14 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "androidClientId": "637482238294-vvo42p39h90ali5n6gvk9hll9rihc276.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.637482238294-pfhbel1327logvi3bf1u22i39gs0qje9",
+          "iosClientId": "637482238294-pfhbel1327logvi3bf1u22i39gs0qje9.apps.googleusercontent.com"
         }
       ]
     ],

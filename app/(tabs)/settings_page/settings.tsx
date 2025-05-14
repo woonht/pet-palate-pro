@@ -1,11 +1,17 @@
-import { Entypo, Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState } from "react";
-import { Modal, StyleSheet, TouchableOpacity } from "react-native";
-import { Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons"
+import { router, useFocusEffect } from "expo-router"
+import React, { useCallback, useState } from "react"
+import { Image, Modal, StyleSheet, TouchableOpacity } from "react-native"
+import { Pressable, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useAuth } from "@/app/auth_context"
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
+import Toast from 'react-native-toast-message'
 
 const SettingsPage = () => {
+
+  const { user } = useAuth()
+  const { setUser } = useAuth();
 
   const [isModeVisible, setModeIsVisible] = useState(false)
   const [descriptionVisible, setDescriptionVisible] = useState(false)
@@ -18,14 +24,48 @@ const SettingsPage = () => {
     }, [])
   )
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await GoogleSignin.signOut(); // Sign out from Google
+      setUser(null);                // Clear user context
+      router.replace('/(tabs)/auth/sign_in'); // Navigate to sign in screen      
+      Toast.show({
+          type: 'success',
+          text1: 'Signed out successfully',
+      })
+    } 
+    catch (error) {
+      console.error('Error during logout:', error);
+    }
     router.replace('/(tabs)/auth/sign_in')
   }
-  
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
+      
+      <View style={styles.settings}>
+        <View style={styles.IconTextLeft}>
+          <View>
+            {user?.user.photo ? (
+              <Image
+              source={{ uri: user?.user.photo }}
+              style={styles.profilePicture}
+              />
+            ) : (
+              <Image
+              source={require('../../../assets/images/defaultuserprofile.jpg')}
+              style={styles.profilePicture}
+              />
+            )}
+          </View>
+          <View style={styles.userInfo}>
+            <Text style={styles.username}>{user?.user.name || 'Guest'}</Text>
+            <Text style={styles.email}>{user?.user.email}</Text>
+          </View>
+        </View>
+      </View>
 
-      <View style={styles.more_settings}>
+      <View style={styles.settings}>
 
         <Pressable onPress={ () => router.push('/(tabs)/settings_page/notification') }>
           <View style={styles.rowSettings}>
@@ -149,7 +189,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   
-  more_settings:{
+  settings:{
 
     backgroundColor: 'white',
     borderRadius: 25,
@@ -157,6 +197,51 @@ const styles = StyleSheet.create({
     paddingInline: 20,
     padding: 15,
     gap: 15,
+  },
+
+  profilePicture: {
+
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+
+  userInfo: {
+
+    paddingInline: 10,
+  },
+
+  username: {
+
+    fontSize: 24,
+  },
+
+  email:{
+
+    color: 'grey',
+  },
+    
+  fullImage: {
+  
+    width: '100%',
+    height: '100%',
+  },
+  
+  backgroundImage: {
+    
+    flex: 1,
+  },
+
+  exitImage: {
+
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    padding: 10,
+    paddingLeft: 15,
+    paddingRight: 15,
+    borderRadius: 50,
   },
 
   IconTextLeft: {
