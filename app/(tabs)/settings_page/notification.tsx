@@ -10,7 +10,7 @@
     const [isEnable, setIsEnable] = useState(false)
     const [isEnableLevel, setIsEnableLevel] = useState(false)
     const [isEnableDispense, setIsEnableDispense] = useState(false)
-    const [isEnableHydration, setIsEnableHydration] = useState(false)
+    const [isEnableHydration,setIsEnableHydration] = useState(false)
     const [isEnableReminder, setIsEnableReminder] = useState(false)
   
     Notifications.setNotificationHandler({
@@ -66,10 +66,10 @@
           }
         }
 
-        setIsEnableLevel(true)
-        setIsEnableDispense(true)
-        setIsEnableHydration(true)
-        setIsEnableReminder(true)
+        handleLevelNotification(true)
+        handleDispenseNotification(true)
+        handleHydrationNotification(true)
+        handleReminderNotification(true)
 
         await AsyncStorage.multiSet([
           ['isEnableLevel', JSON.stringify(true)],
@@ -83,10 +83,10 @@
         await Notifications.cancelAllScheduledNotificationsAsync()
         console.log('Notification disable')
 
-        setIsEnableLevel(false)
-        setIsEnableDispense(false)
-        setIsEnableHydration(false)
-        setIsEnableReminder(false)
+        handleLevelNotification(false)
+        handleDispenseNotification(false)
+        handleHydrationNotification(false)
+        handleReminderNotification(false)
 
         await AsyncStorage.multiRemove([
           'isEnableLevel',
@@ -119,13 +119,28 @@
       setIsEnableReminder(enable)
       await AsyncStorage.setItem('isEnableReminder', JSON.stringify(enable))
 
-      await scheduleNotifications({
-        title: 'Weekly Reminder',
-        body: 'Clean the device.',
-        hour: 9,
-        minute: 0,
-        weekday: 1
-      })
+      if(enable == true) {
+        
+        console.log('Reminder Notification enable.')
+
+        await scheduleNotifications({
+          title: 'Weekly Reminder',
+          body: 'Clean the device.',
+          hour: 9,
+          minute: 0,
+          weekday: 1 // 1 - Sunday, 7 - Saturday
+        })
+      
+        await scheduleNotifications({
+          title: 'Daily Reminder',
+          body: 'Please make sure that you have refill the food and water',
+          hour: 8,
+          minute: 0,
+        })
+      }
+      else {
+        console.log('Reminder Notification disable.')
+      }
     }
 
     const scheduleNotifications = async ({
@@ -136,31 +151,41 @@
       weekday, // optional
       repeats = true,
     }: {
-      title: string,
-      body: string,
-      hour: number,
-      minute: number,
-      weekday?: number, // 1 = Sunday, 7 = Saturday
-      repeats?: boolean,
+      title: string
+      body: string
+      hour: number
+      minute: number
+      weekday?: number
+      repeats?: boolean
     }) => {
-      const trigger: Notifications.CalendarTriggerInput = { // tells the system when to fire the notification
-        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-        hour,
-        minute,
-        repeats,
-      };
-    
-      if (weekday) {
-        trigger.weekday = weekday;
+      const now = new Date()
+      const target = new Date()
+      target.setHours(hour)
+      target.setMinutes(minute)
+      target.setSeconds(0)
+
+      console.log('Now Time:', now.getHours(), ':', now.getMinutes());
+      console.log('Target Time:', target.getHours(), ':', target.getMinutes());
+
+      // If target time is in the past, schedule for next day
+      if (target <= now) {
+        target.setDate(target.getDate() + 1)
       }
-    
-      await Notifications.scheduleNotificationAsync({ // Creates the notification
+      
+      // Calculate difference in seconds, ensure it is integer
+      const secondsUntilTrigger = Math.floor((target.getTime() - now.getTime()) / 1000)
+
+      await Notifications.scheduleNotificationAsync({
         content: {
           title,
           body,
           sound: true,
         },
-        trigger,
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: secondsUntilTrigger,
+          repeats,
+        },
       })
     }
     
