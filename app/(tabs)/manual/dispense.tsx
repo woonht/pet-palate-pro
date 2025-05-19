@@ -9,14 +9,12 @@ const FoodDispense = () => {
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
-      <View style={styles.container}>
-        <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') }>
-          <View style={styles.IconTextLeft}>
-            <Text>Dispense Logs</Text>
-            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-          </View>
-        </PlatformPressable>
-      </View>
+      <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') } style={styles.container}>
+        <View style={styles.IconTextLeft}>
+          <Text>Dispense Logs</Text>
+          <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+        </View>
+      </PlatformPressable>
       <PlatformPressable 
       onPress={() => Alert.alert('Food Dispense')}
       android_ripple={{ color:null }}

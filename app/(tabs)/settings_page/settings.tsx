@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import Toast from 'react-native-toast-message'
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const SettingsPage = () => {
 
@@ -26,18 +27,18 @@ const SettingsPage = () => {
 
   const logout = async () => {
     try {
-      await GoogleSignin.signOut(); // Sign out from Google
-      setUser(null);                // Clear user context
-      router.replace('/(tabs)/auth/sign_in'); // Navigate to sign in screen      
+      await GoogleSignin.signOut() // Sign out from Google
+      setUser(null);               // Clear user context
+      await AsyncStorage.clear()
+      router.replace('/(tabs)/auth/sign_in') // Navigate to sign in screen      
       Toast.show({
           type: 'success',
           text1: 'Signed out successfully',
       })
     } 
     catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Error during logout:', error)
     }
-    router.replace('/(tabs)/auth/sign_in')
   }
 
   return(

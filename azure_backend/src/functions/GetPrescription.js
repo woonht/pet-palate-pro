@@ -13,47 +13,45 @@ app.http('GetPetPrescription', {
   handler: async (request, context) => {
     context.log('GetPetPrescription triggered');
 
-    const petId = request.query.get("petId");
-    const prescriptionId = request.query.get("prescriptionId");
+    const userID = request.query.get("userID");
+    const formType = request.query.get("formType");
 
-    if (!petId) {
+    if (!userID || !formType) {
       return {
         status: 400,
-        body: JSON.stringify({ error: "Missing petId in query parameters." }),
+        body: JSON.stringify({ error: "Missing formType or userID in query parameters." }),
       };
     }
 
     const container = client.database(dbName).container("Prescription");
 
     try {
-      let query;
-      if (prescriptionId) {
-        query = {
-          query: "SELECT * FROM c WHERE c.petId = @petId AND c.id = @prescriptionId",
-          parameters: [
-            { name: "@petId", value: petId },
-            { name: "@prescriptionId", value: prescriptionId }
-          ]
-        };
-      } else {
-        query = {
-          query: "SELECT * FROM c WHERE c.petId = @petId ORDER BY c.date DESC",
-          parameters: [{ name: "@petId", value: petId }]
-        };
+      const query = {
+        query: "SELECT * FROM c WHERE c.userID = @userID",
+        parameters: [{ name: "@userID", value: userID }]
       }
 
-      const { resources } = await container.items.query(query).fetchAll();
+      const { resources } = await container.items.query(query).fetchAll()
+      
+      if (!resources.length) {
+        return {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ error: "No data found for this userID." }),
+        };
+      }
 
       return {
         status: 200,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prescriptionId ? resources[0] || {} : resources),
-      };
-    } catch (error) {
-      context.log.error('Error retrieving prescriptions:', error.message);
+        body: JSON.stringify(resources), // return the first match
+      }; 
+    } 
+    catch (error) {
+      context.log.error("Error reading from Cosmos DB:", error);
       return {
         status: 500,
-        body: JSON.stringify({ error: error.message || "Failed to fetch prescriptions" }),
+        body: JSON.stringify({ error: "Failed to fetch data." }),
       };
     }
   }

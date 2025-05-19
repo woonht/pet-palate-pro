@@ -1,10 +1,11 @@
 import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { PlatformPressable } from "@react-navigation/elements"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
+import { useFocusEffect } from "expo-router"
 
 const Prescription = () => {
 
@@ -85,7 +86,7 @@ const Prescription = () => {
     const dataToSend = {
       ...popUpInput,
       timeID: Date.now().toString(),
-      userID: user?.user.id,
+      userID: user?.userID,
       formType: 'prescription'
     }
   
@@ -108,40 +109,51 @@ const Prescription = () => {
     setInput({ vaccine: '', vet: '', date: '', description: '' })
     setIsVisible(false)
   }
-  
-  const loadFromDatabase = async () => {
-    const petId = "123"; // You might want to get this from AsyncStorage or props
-  
-    try {
-      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?petId=${petId}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      })
-  
-      // Check if response is OK before parsing
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(errorText || 'Failed to load prescriptions')
+
+  useFocusEffect(
+    useCallback( () => {
+      if (!user || !user.userID) {
+        console.warn('User not available yet.');
+        return;
       }
-  
-      const result = await response.json()
-      console.log("Prescriptions loaded:", result)
-  
-      if (result && Array.isArray(result)) {
-        setPrescription(result)
-        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
-      } else if (result && typeof result === "object") {
-        const prescriptionsArray = [result]
-        setPrescription(prescriptionsArray)
-        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
-      } else {
-        throw new Error('Invalid response format')
+      else{
+        console.log(user)
       }
-    } 
-    catch (e) {
-      console.error("Error loading prescriptions from database:", e)
-    }
-  }
+
+      const loadFromDatabase = async () => {  
+        try {
+          const formType = 'prescription'
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?userID=${user?.userID}&formType=${formType}`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          })
+      
+          // Check if response is OK before parsing
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(errorText || 'Failed to load prescriptions')
+          }
+      
+          const result = await response.json()
+          console.log("Prescriptions loaded:", result)
+      
+          if (result && Array.isArray(result)) {
+            setPrescription(result)
+            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
+          } else if (result && typeof result === "object") {
+            const prescriptionsArray = [result]
+            setPrescription(prescriptionsArray)
+            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
+          } else {
+            throw new Error('Invalid response format')
+          }
+        } 
+        catch (e) {
+          console.error("Error loading prescriptions from database:", e)
+        }
+      }
+      loadFromDatabase()
+    },[user]))
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
