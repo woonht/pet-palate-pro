@@ -9,7 +9,7 @@ import { useAuth } from "@/app/auth_context"
 
 const SignUp = () => {
 
-    const [username, setUsername] = useState('')
+    const [name, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
@@ -28,7 +28,7 @@ const SignUp = () => {
 
     const signUp = async () => {
 
-        if (username == '' || email == '' || password == '' || confirm == ''){
+        if (name == '' || email == '' || password == '' || confirm == ''){
 
             Alert.alert('Error', 'Please fill up the required fill.')
         }
@@ -37,7 +37,7 @@ const SignUp = () => {
             const uniqueID = `${Date.now()}_${Math.floor(Math.random() * 100000)}`
             const userData = {
                 userID: uniqueID,
-                username,
+                name,
                 email,
                 password,
                 formType: 'user_data'
@@ -106,7 +106,7 @@ const SignUp = () => {
                         style={styles.sign_up_input}
                         placeholder="Username"
                         placeholderTextColor={'grey'}
-                        value={username}
+                        value={name}
                         onChangeText={(text) => setUsername(text)}
                         />
                 </View>

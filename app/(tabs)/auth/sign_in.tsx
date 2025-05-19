@@ -36,15 +36,36 @@ const SignIn = () => {
         }
         else{
             try{
-                const response = await fetch('https://appinput.azurewebsites.net/api/GetUserData', {
+                const formType = 'user_data'
+                const response = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${username}&formType=${formType}`, {
                     method: 'GET',
                     headers: {'Content-Type' : 'application/json'}
                 })
                 const text = await response.text()
-                router.push('/(tabs)/home/pet_profile')
+                const result = JSON.parse(text)
+                console.log(result)
+
+                if(username === result.user.name && password === result.user.password){
+                    setUser(result)
+                    router.push('/(tabs)/home/pet_profile')
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Signed in successfully',
+                    })
+                }
+                else{
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Invalid username or password',
+                    })  
+                }
             }
             catch(e){
-                console.log('Loading error: ', e)
+                console.error('Loading error: ', e)
+                Toast.show({
+                    type: 'error',
+                    text1: 'Login failed',
+                });
             }
         }
     }
