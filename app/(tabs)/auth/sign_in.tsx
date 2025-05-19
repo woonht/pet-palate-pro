@@ -1,5 +1,5 @@
-import { router } from "expo-router"
-import React, { useEffect, useState } from "react"
+import { router, useFocusEffect } from "expo-router"
+import React, { useCallback, useEffect, useState } from "react"
 import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import 'expo-dev-client'
@@ -9,9 +9,18 @@ import Toast from 'react-native-toast-message'
 
 const SignIn = () => {
 
-    const [email, setEmail] = useState('')
+    const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const { setUser } = useAuth()
+
+    useFocusEffect(
+        useCallback(() => {
+                const emptySignInFill = () => {
+                    setUsername('')
+                    setPassword('')
+                }
+            emptySignInFill()
+        },[]))
 
     useEffect(() => {
         GoogleSignin.configure({
@@ -19,15 +28,24 @@ const SignIn = () => {
         offlineAccess: true,
         })
     }, [])
-
     
-    const login = () => {
+    const login = async () => {
         
-        if(!email || !password){
+        if(!username || !password){
             Alert.alert('Please enter a valid email or password.')
         }
         else{
-            router.push('/(tabs)/home/pet_profile')
+            try{
+                const response = await fetch('https://appinput.azurewebsites.net/api/GetUserData', {
+                    method: 'GET',
+                    headers: {'Content-Type' : 'application/json'}
+                })
+                const text = await response.text()
+                router.push('/(tabs)/home/pet_profile')
+            }
+            catch(e){
+                console.log('Loading error: ', e)
+            }
         }
     }
 
@@ -64,12 +82,13 @@ const SignIn = () => {
             </View>
             <View style={styles.sign_in_info}>
                 <View style={styles.sign_in_row}>
-                    <Text style={styles.text}>Email: </Text>
+                    <Text style={styles.text}>Username: </Text>
                     <TextInput
                         style={styles.sign_in_input}
-                        placeholder="123@gmail.com"
-                        value={email}
-                        onChangeText={(text) => setEmail(text)}
+                        placeholder="Bla Bla Bla"
+                        placeholderTextColor={'grey'}
+                        value={username}
+                        onChangeText={(text) => setUsername(text)}
                         />
                 </View>
                 <View style={styles.sign_in_row}>
@@ -77,6 +96,7 @@ const SignIn = () => {
                     <TextInput
                         style={styles.sign_in_input}
                         placeholder="Enter your password"
+                        placeholderTextColor={'grey'}
                         value={password}
                         onChangeText={(text) => setPassword(text)}
                         secureTextEntry

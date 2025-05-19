@@ -13,13 +13,14 @@ app.http('SaveMedicalRecord', {
         context.log('SaveMedicalRecord triggered.');
 
         try{
-            const medical_record_data = await response.json();
+            const medical_record_data = await request.json();
             const requiredField = ['medical_record', 'vet', 'date'];
             const missingFields = requiredField.filter(field => !medical_record_data[field])
 
             if(!medical_record_data || !medical_record_data.formType){
                 return{
                     status: 400,
+                    headers: { "Content-Type": "application/json" },
                     body:JSON.stringify({error: 'Missing formType in request body.'})
                 };
             }
@@ -27,6 +28,7 @@ app.http('SaveMedicalRecord', {
             if(missingFields > 0){
                 return{
                     status:400,
+                    headers: { "Content-Type": "application/json" },
                     body:JSON.stringify({error: `Missing required field: ${missingFields.join(',')}`}),
                 };
             }
@@ -34,6 +36,7 @@ app.http('SaveMedicalRecord', {
             if(medical_record_data.formType !== "medical_record"){
                 return{
                     status:400,
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({error: "Invalid formType. Only 'medical_record' is allowed."})
                 };
             }
@@ -44,7 +47,9 @@ app.http('SaveMedicalRecord', {
             };
 
             const database = client.database(dbName);
-            const container = database.container("MedicalRecord");
+            const container = database.container("MedicalRecords");
+
+            itemToSave.id = `${medical_record_data.userID}_${Date.now()}`;
 
             let resource;
             if(itemToSave.id){
@@ -57,6 +62,7 @@ app.http('SaveMedicalRecord', {
             }
             return{
                 status: 200,
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(resource),
             };
         }
@@ -64,6 +70,7 @@ app.http('SaveMedicalRecord', {
             context.log.error("Error saving medical record to Cosmos DB: ", error);
             return{
                 status:500,
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ error: "Failed to save data." })
             };
         }

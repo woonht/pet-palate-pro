@@ -1,21 +1,98 @@
-import { router } from "expo-router"
-import React, { useState } from "react"
-import { Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { router, useFocusEffect } from "expo-router"
+import React, { useCallback, useState } from "react"
+import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import Toast from "react-native-toast-message"
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
+import { useAuth } from "@/app/auth_context"
+
 
 const SignUp = () => {
 
+    const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirm, setConfirm] = useState('')
+    const { setUser } = useAuth()
 
-    const signUp = () => {
+    useFocusEffect(
+        useCallback( () => {
+            const emptySignInFill = () => {
+                setUsername('')
+                setEmail('')
+                setPassword('')
+                setConfirm('')
+            }
+            emptySignInFill()
+        },[]))
 
-        router.replace('/(tabs)/auth/sign_in')
+    const signUp = async () => {
+
+        if (username == '' || email == '' || password == '' || confirm == ''){
+
+            Alert.alert('Error', 'Please fill up the required fill.')
+        }
+        else if (password == confirm){
+            
+            const uniqueID = `${Date.now()}_${Math.floor(Math.random() * 100000)}`
+            const userData = {
+                userID: uniqueID,
+                username,
+                email,
+                password,
+                formType: 'user_data'
+            }
+
+            try{
+                const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(userData)
+                })
+                Toast.show({
+                    type: 'success',
+                    text1: 'Signed up successfully',
+                })
+
+                const result = await response.json()
+                console.log('Saved: ', result)
+                console.log('User data saved successfully to database')
+                router.replace('/(tabs)/auth/sign_in')
+            }
+            catch(e){
+                console.log('Saving error: ', e)
+            }
+
+        }
+        else{
+
+            Alert.alert('Error' ,'Password do not match.')
+        }
     }
 
     const toLogin = () => {
 
         router.replace('/(tabs)/auth/sign_in')
+    }
+
+    const signInWithGoogle = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const result = await GoogleSignin.signIn();
+            if (result.type === 'success') {
+                setUser(result.data); // save user globally
+            }
+            router.push('/(tabs)/home/pet_profile')
+            Toast.show({
+                type: 'success',
+                text1: 'Signed in successfully',
+            })
+            console.log('Google sign in successful.')
+            console.log(result)
+        } 
+        catch (e) {
+            console.error(e);
+        }
     }
 
     return(
@@ -27,7 +104,17 @@ const SignUp = () => {
                 <View>
                     <TextInput
                         style={styles.sign_up_input}
+                        placeholder="Username"
+                        placeholderTextColor={'grey'}
+                        value={username}
+                        onChangeText={(text) => setUsername(text)}
+                        />
+                </View>
+                <View>
+                    <TextInput
+                        style={styles.sign_up_input}
                         placeholder="Email"
+                        placeholderTextColor={'grey'}
                         value={email}
                         onChangeText={(text) => setEmail(text)}
                         />
@@ -36,6 +123,7 @@ const SignUp = () => {
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Password"
+                        placeholderTextColor={'grey'}
                         value={password}
                         onChangeText={(text) => setPassword(text)}
                         secureTextEntry
@@ -45,8 +133,9 @@ const SignUp = () => {
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Confirm Password"
-                        value={password}
-                        onChangeText={(text) => setPassword(text)}
+                        placeholderTextColor={'grey'}
+                        value={confirm}
+                        onChangeText={(text) => setConfirm(text)}
                         secureTextEntry
                         />
                 </View>
@@ -63,7 +152,7 @@ const SignUp = () => {
             <View>
                 <Text style={styles.option_text}>--------------------or--------------------</Text>
             </View>
-                <Pressable style={styles.google_sign_up_button}>
+                <Pressable onPress={ () => signInWithGoogle() } style={styles.google_sign_up_button}>
                     <View style={styles.google_sign_up}>
                         <Image source={require('../../../assets/images/google.png')} style={styles.google_icon}/>
                         <Text style={styles.google_sign_up_text}>Login with Google</Text>

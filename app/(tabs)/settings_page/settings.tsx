@@ -11,7 +11,7 @@ import Toast from 'react-native-toast-message'
 const SettingsPage = () => {
 
   const { user } = useAuth()
-  const { setUser } = useAuth();
+  const { setUser } = useAuth()
 
   const [isModeVisible, setModeIsVisible] = useState(false)
   const [descriptionVisible, setDescriptionVisible] = useState(false)

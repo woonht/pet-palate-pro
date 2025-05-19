@@ -3,9 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router, useFocusEffect } from "expo-router"
 import * as ImagePicker from "expo-image-picker"
 import React, { useCallback, useEffect, useState } from "react"
-import { Pressable, StyleSheet, Text, View, Image, Platform, Alert, Modal, ImageBackground } from "react-native"
+import { Pressable, StyleSheet, Text, View, Image, Platform, Alert, Modal, ImageBackground, useWindowDimensions } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { store } from "expo-router/build/global-state/router-store"
 
 const Profile = () => {
 
@@ -20,6 +19,7 @@ const Profile = () => {
     const defaultprofile = require('../../../assets/images/defaultprofile.jpg')
     const [profilePictureVisible, setProfilePictureVisible] = useState(false)
     const [menuVisible, setMenuVisible] = useState(false)
+    const { width, height } = useWindowDimensions()
 
     useEffect(() => {
         (async () => {

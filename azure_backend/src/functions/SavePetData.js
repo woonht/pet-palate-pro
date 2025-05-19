@@ -39,6 +39,8 @@ app.http('SavePetData', {
                 timestamp: new Date().toISOString() 
             };
 
+            itemToSave.id = data.userID;
+
             let resource;
             if (itemToSave.id) {
                 // If ID exists, try to upsert (update or insert) the document

@@ -1,48 +1,82 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { router } from "expo-router"
+import React, { useEffect, useState } from "react"
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useAuth } from "@/app/auth_context"
 
 const UserInput = () => {
-    const [input, setInput] = useState({
+  const [input, setInput] = useState({
+    
+    temperament:'',
+    skills:'',
+    like:'',
+    dislike:'',
+  })
+  const { user } = useAuth()
 
-        temperament:'',
-        skills:'',
-        like:'',
-        dislike:'',
-    })
+  const handleChange = (key:string, value:string) => {
+      setInput(prev => ({ ...prev, [key]: value }))
+  }
 
-    const handleChange = (key:string, value:string) => {
-        setInput(prev => ({ ...prev, [key]: value }));
-    };
+  const savePetPersonalityHabitToStorage = async () => {
+    try{
+      await AsyncStorage.setItem('pet_personality_habit', JSON.stringify(input))
+      router.back()
+      console.log('Data saved to Asyncstorage')
+    }
+    catch(e){
+      console.log('Saving Error: ', e)
+    }
+  }
 
-    const savePetPersonalityHabitToStorage = async () => {
-
+  useEffect( () => {
+    const loadPetPersonalityHabit = async () => {
       try{
-        await AsyncStorage.setItem('pet_personality_habit', JSON.stringify(input))
-        router.back()
-        console.log('Data saved to Asyncstorage')
+        const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
+        if(storedPersonalityHabit)
+          setInput(JSON.parse(storedPersonalityHabit))
+        console.log('Data load successfully')
       }
       catch(e){
-        console.log('Saving Error: ', e)
+        console.log('Loading Error: ', e)
       }
     }
+    loadPetPersonalityHabit()
+  },[])
 
-    useEffect( () => {
-      const loadPetPersonalityHabit = async () => {
-        try{
-          const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
-          if(storedPersonalityHabit)
-            setInput(JSON.parse(storedPersonalityHabit))
-          console.log('Data load successfully')
-        }
-        catch(e){
-          console.log('Loading Error: ', e)
-        }
-      }
-      loadPetPersonalityHabit()
-    },[])
+  const savePetPersonalityHabitToDatabase = async () => {
+    const dataToSend = {
+      ...input,
+      userID: user?.user.id,
+      formType: 'personality_habit'
+    }
+    
+    try{
+      await savePetPersonalityHabitToStorage()
+      const response = await fetch('https://appinput.azurewebsites.net/api/SavePersonalityHabit?', {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(dataToSend)
+      })
+
+      const result = await response.json()
+      console.log("Saved:", result)
+      console.log("Pet personality and habit successfully saved to database.")
+    }
+    catch(e){
+      console.log(dataToSend)
+      console.log("Failed to save data to database: ", e)
+    }
+  }
+
+  const empty = () => {
+    setInput({    
+      temperament:'',
+      skills:'',
+      like:'',
+      dislike:''})
+  }
 
   return(
 
@@ -53,6 +87,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Friendly, Playful"
+                placeholderTextColor={'grey'}
                 value={input.temperament}
                 onChangeText={(text) => handleChange('temperament', text)}
                 />
@@ -62,6 +97,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Hand Shake, Sit, Stand"
+                placeholderTextColor={'grey'}
                 value={input.skills}
                 onChangeText={(text) => handleChange('skills', text)}
                 />
@@ -71,6 +107,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Ball, Park Walking"
+                placeholderTextColor={'grey'}
                 value={input.like}
                 onChangeText={(text) => handleChange('like', text)}
                 />
@@ -80,13 +117,17 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Thunder, Firework"
+                placeholderTextColor={'grey'}
                 value={input.dislike}
                 onChangeText={(text) => handleChange('dislike', text)}
                 />
         </View>        
 
-        <Pressable onPress={savePetPersonalityHabitToStorage}>
+        <Pressable onPress={savePetPersonalityHabitToDatabase}>
           <Text>Save</Text>
+        </Pressable>
+        <Pressable onPress={empty}>
+          <Text>Empty</Text>
         </Pressable>
 
     </SafeAreaView>

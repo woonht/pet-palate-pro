@@ -1,39 +1,36 @@
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PlatformPressable } from "@react-navigation/elements";
-import React, { useEffect, useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { PlatformPressable } from "@react-navigation/elements"
+import React, { useEffect, useState } from "react"
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useAuth } from "@/app/auth_context"
 
 const Prescription = () => {
 
   const [isVisible, setIsVisible] = useState(false)
-
   const [popUpInput, setInput] = useState({
-
     vaccine:'',
     description:'',
     vet:'',
     date:'',
   })
-
-  const handleChange = (key:string, value:string) => {
-    setInput(prev => ({...prev, [key]: value}))
-  }
-
+  const [prescription, setPrescription] = useState<PrescriptionRecordType[]>([])
+  const { user } = useAuth()
+  
   type PrescriptionRecordType = {
-    
     id: string;
     vaccine: string;
     description: string;
     vet: string;
     date: string;
-  };
-
-  const [prescription, setPrescription] = useState<PrescriptionRecordType[]>([])
+  }
+  
+  const handleChange = (key:string, value:string) => {
+    setInput(prev => ({...prev, [key]: value}))
+  }
 
   const saveToStorage = async () => {
-
     if(!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
       return
@@ -55,9 +52,6 @@ const Prescription = () => {
     catch(e){
       console.log('Saving Error: ', e)
     }
-
-    setInput({ vaccine: '', vet: '', date: '', description: '' })
-    setIsVisible(false)
   }
 
   useEffect( () => {
@@ -88,39 +82,31 @@ const Prescription = () => {
   }
 
   const saveToDatabase = async () => {
-    if (!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date) {
-      Alert.alert("Error", "Please fill in all required fields")
-      return
-    }
-  
     const dataToSend = {
       ...popUpInput,
-      petId: "123", // You might want to get this from AsyncStorage or props
-      id: Date.now().toString(), // Generate unique ID if not editing existing
+      timeID: Date.now().toString(),
+      userID: user?.user.id,
       formType: 'prescription'
     }
   
     try {
       await saveToStorage()
-      const response = await fetch("https://appinput.azurewebsites.net/api/SavePetPrescription", {
+      const response = await fetch("https://appinput.azurewebsites.net/api/SavePetPrescription?", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),
       })
     
-      const text = await response.text() // log raw text for debugging
-      console.log("Raw response:", text)
-    
-      if (!response.ok) {
-        throw new Error(text || 'Failed to save prescription')
-      }
-    
+      const text = await response.text()
       const result = JSON.parse(text)
+
       console.log("Saved to database:", result)
-      
-    } catch (e) {
+    } 
+    catch (e) {
       console.error("Failed to save prescription:", e)
     }
+    setInput({ vaccine: '', vet: '', date: '', description: '' })
+    setIsVisible(false)
   }
   
   const loadFromDatabase = async () => {

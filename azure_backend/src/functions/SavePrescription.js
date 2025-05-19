@@ -1,4 +1,3 @@
-// SavePetPrescription.js
 const { app } = require('@azure/functions');
 const { CosmosClient } = require("@azure/cosmos");
 
@@ -17,12 +16,13 @@ app.http('SavePetPrescription', {
       const prescriptionData = await request.json();
 
       // Validate required fields
-      const requiredFields = ['petId', 'vaccine', 'vet', 'date'];
+      const requiredFields = ['vaccine', 'vet', 'date'];
       const missingFields = requiredFields.filter(field => !prescriptionData[field]);
 
       if (!prescriptionData || !prescriptionData.formType){
         return{
           status:400,
+          headers: { "Content-Type": "application/json" },
           body:JSON.stringify({error: 'Missing formType in request body.'})
         };
       }
@@ -30,6 +30,7 @@ app.http('SavePetPrescription', {
       if (missingFields.length > 0) {
         return {
           status: 400,
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ error: `Missing required fields: ${missingFields.join(', ')}` }),
         };
       }
@@ -37,6 +38,7 @@ app.http('SavePetPrescription', {
       if (prescriptionData.formType !== "prescription"){
         return {
           status: 400,
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({error: "Invalid formType. Only 'prescription' is allowed."})
         } 
       }
@@ -48,6 +50,8 @@ app.http('SavePetPrescription', {
 
       const container = client.database(dbName).container("Prescription");
       
+      itemToSave.id = `${prescriptionData.userID}_${Date.now()}`;
+
       let resource;
       if(itemToSave.id){
         const { resource: updatedResource } = await container.items.upsert(itemToSave);
@@ -68,6 +72,7 @@ app.http('SavePetPrescription', {
       context.log.error('Error saving prescription to Cosmos DB:', error);
       return {
         status: 500,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ error: "Failed to save data."}),
       };
     }

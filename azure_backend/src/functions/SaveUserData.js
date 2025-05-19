@@ -6,16 +6,16 @@ const key = process.env.COSMOS_KEY;
 const dbName = process.env.COSMOS_DB_NAME;
 const client = new CosmosClient({ endpoint, key })
 
-app.http('SavePersonalityHabit', {
+app.http('SaveUserData', {
     methods: ['POST'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
-        context.log('SavePersonalityHabit triggered.');
+        context.log('SaveUserData triggered.');
         
         try{
-            const personality_habit_data = await request.json();
+            const user_data = await request.json();
 
-            if(!personality_habit_data || !personality_habit_data.formType){
+            if(!user_data || !user_data.formType){
                 return{
                     status:400,
                     headers: { "Content-Type": "application/json" },
@@ -23,23 +23,23 @@ app.http('SavePersonalityHabit', {
                 };
             }
 
-            if(personality_habit_data.formType !== "personality_habit"){
+            if(user_data.formType !== "user_data"){
                 return{
                     status:400,
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({error: "Invalid formType. Only 'personality_habit' is allowed."})
+                    body: JSON.stringify({error: "Invalid formType. Only 'user_data' is allowed."})
                 };
             }
 
             const database = client.database(dbName);
-            const container = database.container("PersonalityHabits");
+            const container = database.container("UserData");
 
             const itemToSave = {
-                ...personality_habit_data,
+                ...user_data,
                 timeStamp: new Date().toISOString
             };
 
-            itemToSave.id = personality_habit_data.userID;
+            itemToSave.id = user_data.userID;
 
             let resource;
             if(itemToSave.id){
@@ -57,7 +57,7 @@ app.http('SavePersonalityHabit', {
             };
         }
         catch(error){
-            context.log.error("Error saving personality and habit to Cosmos DB: ", error)
+            context.log.error("Error saving user data to Cosmos DB: ", error)
             return{
                 status: 400,
                 headers: { "Content-Type": "application/json" },

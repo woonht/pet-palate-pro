@@ -1,38 +1,36 @@
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { PlatformPressable } from "@react-navigation/elements";
-import React, { useEffect, useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { PlatformPressable } from "@react-navigation/elements"
+import React, { useEffect, useState } from "react"
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useAuth } from "@/app/auth_context"
 
 const Medical = () => {
 
   const [isVisible, setIsVisible] = useState(false)
-
   const [popUpInput, setInput] = useState({
-
     medical_record:'',
     description:'',
     vet:'',
     date:'',
   })
-
-  const handleChange = (key:string, value:string) => {
-    setInput(prev => ({...prev, [key]: value}))
-  }
+  const [medicalRecord, setMedicalRecord] = useState<MedicalRecordType[]>([])
+  const { user } = useAuth()
 
   type MedicalRecordType = {
-    
     id: string;
     medical_record: string;
     description: string;
     vet: string;
     date: string;
-  };
+  };  
+  
+  const handleChange = (key:string, value:string) => {
+    setInput(prev => ({...prev, [key]: value}))
+  }
 
-  const [medicalRecord, setMedicalRecord] = useState<MedicalRecordType[]>([])
-
-  const handleSave = async () => {
+  const saveToStorage = async () => {
 
     if(!popUpInput.medical_record || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
@@ -54,9 +52,6 @@ const Medical = () => {
     catch(e){
       console.log('Saving Error: ', e)
     }
-
-    setInput({ medical_record: '', vet: '', date: '', description: '' })
-    setIsVisible(false)
   }
 
   useEffect( () => {
@@ -84,7 +79,69 @@ const Medical = () => {
     catch(e){
       console.log('Deleting Error: ', e)
     }
-  };
+  }
+
+  const saveToDatabase = async () => {
+    const dataToSend = {
+      ...popUpInput,
+      timeID: Date.now().toString(),
+      userID: user?.user.id,
+      formType: 'medical_record'
+    }
+  
+    try {
+      await saveToStorage()
+      const response = await fetch("https://appinput.azurewebsites.net/api/SaveMedicalRecord?", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSend),
+      })
+    
+      const text = await response.text()
+      const result = JSON.parse(text)
+
+      console.log("Saved to database:", result)
+    } 
+    catch (e) {
+      console.error("Failed to save medical record:", e)
+    }
+    setInput({ medical_record: '', vet: '', date: '', description: '' })
+    setIsVisible(false)
+  }
+  
+  const loadFromDatabase = async () => {
+    const petId = "123"; // You might want to get this from AsyncStorage or props
+  
+    try {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?petId=${petId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+  
+      // Check if response is OK before parsing
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || 'Failed to load medical record')
+      }
+  
+      const result = await response.json()
+      console.log("Medical record loaded:", result)
+  
+      if (result && Array.isArray(result)) {
+        setMedicalRecord(result)
+        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
+      } else if (result && typeof result === "object") {
+        const prescriptionsArray = [result]
+        setMedicalRecord(prescriptionsArray)
+        await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
+      } else {
+        throw new Error('Invalid response format')
+      }
+    } 
+    catch (e) {
+      console.error("Error loading medical record from database:", e)
+    }
+  }
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
@@ -174,7 +231,7 @@ const Medical = () => {
                                   }>
                 <Text>Cancel</Text>
               </Pressable>
-              <Pressable onPress={ () => handleSave()}>
+              <Pressable onPress={ () => saveToDatabase()}>
                 <Text>Save</Text>
               </Pressable>
             </View>

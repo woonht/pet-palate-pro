@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from "@/app/auth_context"
 
 const UserInput = () => {
 
@@ -14,6 +15,7 @@ const UserInput = () => {
     sex:'',
     weight:'',
   })
+  const { user } = useAuth()  
 
   useEffect( () => {
     const loadPetInfoFromStorage = async () => {
@@ -48,6 +50,7 @@ const UserInput = () => {
   const savePetInfoToDatabase = async () => {
     const dataToSend = {
       ...input,
+      userID: user?.user.id,
       formType: "basic_info"  //choose either "basic_info", "medical_record", "personality_habit", "prescription"
     }
 
@@ -57,15 +60,15 @@ const UserInput = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(dataToSend),  
-      });
+      })
   
       const result = await response.json()
       console.log("Saved:", result)
-      console.log("Success", "Pet info saved to database.")
+      console.log("Pet info saved successfully to database.")
     } 
     catch (e) {
       console.log(dataToSend)
-      console.log("Failed to save data.: ", e)
+      console.log("Failed to save data: ", e)
     }
   }
 
@@ -73,7 +76,7 @@ const UserInput = () => {
     try {
       const response = await fetch('https://appinput.azurewebsites.net/api/GetPetData', {
         method: "GET",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type" : "application/json" },
       })
   
       const text = await response.text() // Read raw response
@@ -127,6 +130,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter pet's name"
+                placeholderTextColor={'grey'}
                 value={input.name}
                 onChangeText={(text) => handleChange('name', text)}
                 />
@@ -136,6 +140,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="1-1-2020"
+                placeholderTextColor={'grey'}
                 value={input.birthdate}
                 onChangeText={(text) => handleChange('birthdate', text)}
                 />
@@ -145,6 +150,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Golden Retriever"
+                placeholderTextColor={'grey'}
                 value={input.species}
                 onChangeText={(text) => handleChange('species', text)}
                 />
@@ -154,6 +160,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Dog"
+                placeholderTextColor={'grey'}
                 value={input.breed}
                 onChangeText={(text) => handleChange('breed', text)}
                 />
@@ -163,6 +170,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Male"
+                placeholderTextColor={'grey'}
                 value={input.sex}
                 onChangeText={(text) => handleChange('sex', text)}
                 />
@@ -172,6 +180,7 @@ const UserInput = () => {
             <TextInput
                 style={styles.input}
                 placeholder="25kg"
+                placeholderTextColor={'grey'}
                 value={input.weight}
                 onChangeText={(text) => handleChange('weight', text)}
                 />
