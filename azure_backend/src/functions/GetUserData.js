@@ -10,7 +10,7 @@ app.http('GetUserData', {
     methods: ['GET'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
-        context.log('SaveUserData triggered');
+        context.log('GetUserData triggered');
 
         const formType = request.query.get("formType");
         const username = request.query.get("name");

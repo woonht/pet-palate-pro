@@ -41,6 +41,45 @@ app.http('SaveUserData', {
 
             itemToSave.id = user_data.userID;
 
+            // Query to check for existing username or email
+            const querySpecUsername = {
+                query: "SELECT * FROM c WHERE c.name = @name",
+                parameters: [{ name: "@name", value: itemToSave.name }]
+            };
+
+            const querySpecEmail = {
+                query: "SELECT * FROM c WHERE c.email = @email",
+                parameters: [{ name: "@email", value: itemToSave.email }]
+            };
+
+            const { resources: existingUsernames } = await container.items.query(querySpecUsername).fetchAll();
+            const { resources: existingEmails } = await container.items.query(querySpecEmail).fetchAll();
+
+            // If duplicates exist and this is a new registration (no id), reject with 409
+            // If the query found any matching document
+            // And if the incoming data does not have an id field (which means it’s a new registration, not an update)
+            if (existingUsernames.length > 0 && existingEmails.length > 0){
+                return {
+                    status: 409,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ error: "Username and email already exists." })
+                };   
+            }
+            if (existingUsernames.length > 0) {
+                return {
+                    status: 409,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ error: "Username already exists." })
+                };
+            }
+            if (existingEmails.length > 0) {
+                return {
+                    status: 409,
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ error: "Email already exists." })
+                };
+            }
+
             let resource;
             if(itemToSave.id){
                 const { resource: updatedResource } = await container.items.upsert(itemToSave);

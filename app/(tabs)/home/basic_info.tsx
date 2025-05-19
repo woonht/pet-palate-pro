@@ -1,15 +1,15 @@
 import { FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { router} from "expo-router";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "@/app/auth_context"
 
 const BasicInfo = () => {
 
   const [basic_info, setBasicInfo] = useState({
-
     name:'',
     birthdate:'',
     species:'',
@@ -17,14 +17,13 @@ const BasicInfo = () => {
     sex:'',
     weight:'',
   })
-
   const [personality_habit, setPersonalityHabit] = useState({
-  
     temperament:'',
     skills:'',
     like:'',
     dislike:'',
   })
+  const { user } = useAuth()  
 
   useFocusEffect(
     useCallback(() => {
@@ -58,6 +57,107 @@ const BasicInfo = () => {
       }
       loadPetPersonalityHabit()
     }, []))
+
+  useEffect( () => {
+    const loadPetInfoFromDatabase = async () => {  
+      if (!user || !user.userID) {
+        console.warn('User not available yet.');
+        return;
+      }
+      else{
+        console.log(user)
+      }
+
+      try {
+        const formType = 'basic_info'
+        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
+          method: "GET",
+          headers: { "Content-Type" : "application/json" },
+        })
+    
+        const text = await response.text() // Read raw response
+        console.log("Raw response text:", text) // Debug what was returned
+    
+        if (!text) {
+          console.warn("Empty response received from backend.")
+          return
+        }
+    
+        const result = JSON.parse(text) // Only parse if not empty
+  
+        if (result.error) {
+          console.warn("Server responded with error:", result.error)
+          return
+        }
+    
+        if (result && typeof result === "object") {
+          setBasicInfo({
+            name: result.name || '',
+            birthdate: result.birthdate || '',
+            species: result.species || '',
+            breed: result.breed || '',
+            sex: result.sex || '',
+            weight: result.weight || '',
+          })
+          console.log("Pet info loaded:", result)
+        }
+    
+      } catch (e) {
+        console.error("Error loading pet info from database:", e)
+      }
+    }
+    loadPetInfoFromDatabase()
+  },[user]) // <-- re-run when user changes
+
+  useFocusEffect( 
+    useCallback(() => {
+    const loadPetPersonalityHabitFromDatabase = async () => {  
+      if (!user || !user.userID) {
+        console.warn('User not available yet.');
+        return;
+      }
+      else{
+        console.log(user)
+      }
+
+      try {
+        const formType = 'personality_habit'
+        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}`, {
+          method: "GET",
+          headers: { "Content-Type" : "application/json" },
+        })
+    
+        const text = await response.text() // Read raw response
+        console.log("Raw response text:", text) // Debug what was returned
+    
+        if (!text) {
+          console.warn("Empty response received from backend.")
+          return
+        }
+    
+        const result = JSON.parse(text) // Only parse if not empty
+  
+        if (result.error) {
+          console.warn("Server responded with error:", result.error)
+          return
+        }
+    
+        if (result && typeof result === "object") {
+          setPersonalityHabit({
+            temperament: result.temperament || '',
+            skills: result.skills || '',
+            like: result.like || '',
+            dislike: result.dislike || '',
+          })
+          console.log("Pet personality and habit loaded:", result)
+        }
+    
+      } catch (e) {
+        console.error("Error loading pet personality and habit from database:", e)
+      }
+    }
+    loadPetPersonalityHabitFromDatabase()
+  },[user])) // <-- re-run when user changes
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={[styles.whole_page]}>

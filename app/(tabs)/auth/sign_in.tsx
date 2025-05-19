@@ -46,7 +46,14 @@ const SignIn = () => {
                 console.log(result)
 
                 if(username === result.user.name && password === result.user.password){
-                    setUser(result)
+                    setUser({
+                        userID: result.user.userID,
+                        name: result.user.name,
+                        email: result.user.email,
+                        photo: '',
+                        provider: 'local',
+                    })
+
                     router.push('/(tabs)/home/pet_profile')
                     Toast.show({
                         type: 'success',
@@ -61,10 +68,9 @@ const SignIn = () => {
                 }
             }
             catch(e){
-                console.error('Loading error: ', e)
                 Toast.show({
                     type: 'error',
-                    text1: 'Login failed',
+                    text1: 'Login failed. Please sign up',
                 });
             }
         }
@@ -77,21 +83,56 @@ const SignIn = () => {
 
     const signInWithGoogle = async () => {
         try {
-            await GoogleSignin.hasPlayServices();
-            const result = await GoogleSignin.signIn();
+            await GoogleSignin.hasPlayServices()
+            const result = await GoogleSignin.signIn()
+
             if (result.type === 'success') {
-                setUser(result.data); // save user globally
+                const googleUser = {
+                    userID: result.data.user.id,
+                    name: result.data.user.name || '',
+                    email: result.data.user.email,
+                    photo: result.data.user.photo || '',
+                    provider: 'google' as const,
+                }
+                setUser(googleUser); // save user globally
             }
-            router.push('/(tabs)/home/pet_profile')
-            Toast.show({
-                type: 'success',
-                text1: 'Signed in successfully',
-            })
-            console.log('Google sign in successful.')
-            console.log(result)
+            
+            if (result && result.data?.user) {
+                const { id, name, email } = result.data.user;
+                const userData = {
+                    userID: id,
+                    name,
+                    email,
+                    password: '', // not needed for Google
+                    formType: 'user_data',
+                    provider: 'google',
+                }
+                
+                try{
+                    const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(userData)
+                    })
+                    
+                    const save = await response.json()
+                    console.log('Saved', save)
+                    router.push('/(tabs)/home/pet_profile')
+                    
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Signed in successfully',
+                    })
+                    console.log('Google sign in successful.')
+                    console.log(result)
+                }
+                catch(e){
+                    console.error('Google sign in data failed to save to database: ', e)
+                }
+            }
         } 
         catch (e) {
-            console.error(e);
+            console.error('Google sign in failed: ' ,e);
         }
     }
 

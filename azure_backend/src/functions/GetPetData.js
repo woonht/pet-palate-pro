@@ -10,15 +10,15 @@ app.http('GetPetData', {
     methods: ['GET'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
-        context.log(`Http GET request to: ${request.url}`);
+        context.log('GetPetData triggered');
 
         const formType = request.query.get("formType");
-        const petId = request.query.get("petId");
+        const userID = request.query.get("userID");
 
-        if (!formType || !petId) {
+        if (!formType || !userID) {
             return {
                 status: 400,
-                body: JSON.stringify({ error: "Missing formType or userId in query parameters." }),
+                body: JSON.stringify({ error: "Missing formType or userID in query parameters." }),
             };
         }
         
@@ -38,8 +38,8 @@ app.http('GetPetData', {
 
         try {
             const query = {
-                query: "SELECT * FROM c WHERE c.petId = @petId",
-                parameters: [{ name: "@petId", value: petId }]
+                query: "SELECT * FROM c WHERE c.userID = @userID",
+                parameters: [{ name: "@userID", value: userID }]
             };
 
             const { resources } = await container.items.query(query).fetchAll();
@@ -48,7 +48,7 @@ app.http('GetPetData', {
                 return {
                     status: 404,
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "No data found for this petId." }),
+                    body: JSON.stringify({ error: "No data found for this userID." }),
                 };
             }
 

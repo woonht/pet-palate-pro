@@ -46,9 +46,9 @@ const SettingsPage = () => {
       <View style={styles.settings}>
         <View style={styles.IconTextLeft}>
           <View>
-            {user?.user.photo ? (
+            {user?.photo ? (
               <Image
-              source={{ uri: user?.user.photo }}
+              source={{ uri: user?.photo }}
               style={styles.profilePicture}
               />
             ) : (
@@ -59,8 +59,8 @@ const SettingsPage = () => {
             )}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{user?.user.name || 'Guest'}</Text>
-            <Text style={styles.email}>{user?.user.email}</Text>
+            <Text style={styles.username}>{user?.name || 'Guest'}</Text>
+            <Text style={styles.email}>{user?.email}</Text>
           </View>
         </View>
       </View>

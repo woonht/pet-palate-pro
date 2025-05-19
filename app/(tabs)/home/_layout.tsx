@@ -15,6 +15,7 @@ const StackLayout = () => {
         <Stack.Screen name='medical_record' options={{title:'Medical Record'}}/>
         <Stack.Screen name='prescription' options={{title:'Prescription'}}/>
         <Stack.Screen name='basic_info_input' options={{title:'Basic Information'}}/>
+        <Stack.Screen name='personality_habit_input' options={{title:'Personality and Habit'}}/>
     </Stack>
   )
 }

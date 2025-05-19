@@ -1,10 +1,17 @@
 // context/AuthContext.tsx
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { User } from '@react-native-google-signin/google-signin';
+
+export type AppUser = {
+  userID: string;
+  name: string;
+  email: string;
+  photo: string;
+  provider: 'google' | 'local';
+};
 
 type AuthContextType = {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: AppUser | null;
+  setUser: (user: AppUser | null) => void;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -13,7 +20,8 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
+
   return (
     <AuthContext.Provider value={{ user, setUser }}>
       {children}
