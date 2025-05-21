@@ -50,17 +50,10 @@ app.http('SavePetPrescription', {
 
       const container = client.database(dbName).container("Prescription");
       
-      itemToSave.id = `${prescriptionData.userID}_${Date.now()}`;
+      itemToSave.id = `${prescriptionData.userID}_${prescriptionData.timeID}`;
+      itemToSave.presID = itemToSave.id
 
-      let resource;
-      if(itemToSave.id){
-        const { resource: updatedResource } = await container.items.upsert(itemToSave);
-        resource = updatedResource;
-      }
-      else{
-        const { resource: createdResource} = await container.items.create(itemToSave);
-        resource = createdResource;
-      }
+      const { resource } = await container.items.create(itemToSave);
 
       return {
         status: 200,

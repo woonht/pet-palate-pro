@@ -20,7 +20,9 @@ const Medical = () => {
   const { user } = useAuth()
 
   type MedicalRecordType = {
-    id: string;
+    userID: string;
+    timeID: string;
+    formType: string;
     medical_record: string;
     description: string;
     vet: string;
@@ -31,22 +33,17 @@ const Medical = () => {
     setInput(prev => ({...prev, [key]: value}))
   }
 
-  const saveToStorage = async () => {
+  const saveToStorage = async (newMedicalRecord:MedicalRecordType) => {
 
     if(!popUpInput.medical_record || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
       return
     }
-    
-    const newMedicalRecord = {
-      id: Date.now().toString(),
-      ...popUpInput,
-    }
-    
+
     const updatedMedicalRecord = [...medicalRecord, newMedicalRecord]
 
     try{
-      await AsyncStorage.setItem('medicalRecord', JSON.stringify(updatedMedicalRecord))
+      await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(updatedMedicalRecord))
       setMedicalRecord(updatedMedicalRecord)
       console.log('Data save successfully.')
     }
@@ -55,25 +52,22 @@ const Medical = () => {
     }
   }
 
-  useEffect( () => {
-    const loadMedicalRecord = async () => {
-      try{
-        const storedMedicalRecord = await AsyncStorage.getItem('medicalRecord')
-        if(storedMedicalRecord)
-          setMedicalRecord(JSON.parse(storedMedicalRecord))
-        console.log('Data load successfully.')
-      }
-      catch(e){
-        console.log('Loading Error: ', e)
-      }
+  const loadMedicalRecord = async () => {
+    try{
+      const storedMedicalRecord = await AsyncStorage.getItem(`medicalRecord_${user?.userID}`)
+      if(storedMedicalRecord)
+        setMedicalRecord(JSON.parse(storedMedicalRecord))
+      console.log('Data load successfully.')
     }
-    loadMedicalRecord()
-  },[])
+    catch(e){
+      console.log('Loading Error: ', e)
+    }
+  }
 
   const handleDelete = async (id: string) => {
     try{
-      const updatedMedicalRecord = medicalRecord.filter(item => item.id !== id)
-      await AsyncStorage.setItem('medicalRecord', JSON.stringify(updatedMedicalRecord))
+      const updatedMedicalRecord = medicalRecord.filter(item => item.timeID !== id)
+      await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(updatedMedicalRecord))
       setMedicalRecord(updatedMedicalRecord)
       console.log('Data delete successfully.')
     }
@@ -86,12 +80,12 @@ const Medical = () => {
     const dataToSend = {
       ...popUpInput,
       timeID: Date.now().toString(),
-      userID: user?.userID,
+      userID: user!.userID,
       formType: 'medical_record'
     }
   
     try {
-      await saveToStorage()
+      await saveToStorage(dataToSend)
       const response = await fetch("https://appinput.azurewebsites.net/api/SaveMedicalRecord?", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,7 +103,6 @@ const Medical = () => {
     setInput({ medical_record: '', vet: '', date: '', description: '' })
     setIsVisible(false)
   }
-  
 
   useFocusEffect(
     useCallback( () => {
@@ -121,8 +114,9 @@ const Medical = () => {
         console.log(user)
       }
 
-      const loadFromDatabase = async () => {  
+      const loadFromDatabase = async () => { 
         try {
+          await loadMedicalRecord() 
           const formType = 'medical_record'
           const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetMedicalRecord?userID=${user?.userID}&formType=${formType}`, {
             method: "GET",
@@ -150,18 +144,46 @@ const Medical = () => {
           }
         } 
         catch (e) {
-          console.error("Error loading medical record from database:", e)
+          console.warn("Error loading medical record from database:", e)
         }
       }
       loadFromDatabase()
     },[user]))
+
+  const deleteInDatabase = async ( timeID:string ) => {
+    try{
+      await handleDelete(timeID)
+      console.log('timeID', timeID)
+      console.log('userID', user?.userID)
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteMedicalRecord?userID=${user?.userID}&timeID=${timeID}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+      })
+      const resultText = await response.text()
+
+      if (!response.ok) {
+        throw new Error(resultText || 'Failed to delete medical record')
+      }
+
+      // Only parse JSON if body is not empty
+      if (resultText.trim()) {
+        const result = JSON.parse(resultText)
+        console.log('Deleted from database:', result)
+      } else {
+        console.log('Deleted from database: No response body')
+      }
+    }
+    catch(e){
+      console.error('Deleting error: ', e)
+    }
+  }
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
       {medicalRecord.map((item) => (
-        <View key={item.id} style={styles.record}>
+        <View key={item.timeID} style={styles.record}>
           <View style={styles.recordTitleIconLeft}>
             <MaterialCommunityIcons name="pill" size={40} color="black" />
             <Text style={styles.recordTitle}>{item.medical_record}</Text>
@@ -170,7 +192,7 @@ const Medical = () => {
           <Text>{item.vet}</Text>
           <Text>Expires: {item.date}</Text>
 
-          <Pressable onPress={() => handleDelete(item.id)} style={styles.remove}>
+          <Pressable onPress={() => deleteInDatabase(item.timeID)} style={styles.remove}>
             <Text style={{color:'red', fontSize: 20}}>Remove</Text>
           </Pressable>
         </View>

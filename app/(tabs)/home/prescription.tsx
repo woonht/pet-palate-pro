@@ -16,11 +16,13 @@ const Prescription = () => {
     vet:'',
     date:'',
   })
-  const [prescription, setPrescription] = useState<PrescriptionRecordType[]>([])
+  const [prescription, setPrescription] = useState<PrescriptionType[]>([])
   const { user } = useAuth()
   
-  type PrescriptionRecordType = {
-    id: string;
+  type PrescriptionType = {
+    userID: string;
+    timeID: string;
+    formType: string;
     vaccine: string;
     description: string;
     vet: string;
@@ -31,22 +33,17 @@ const Prescription = () => {
     setInput(prev => ({...prev, [key]: value}))
   }
 
-  const saveToStorage = async () => {
+  const saveToStorage = async (newPrescription:PrescriptionType) => {
     if(!popUpInput.vaccine || !popUpInput.vet || !popUpInput.date){
       Alert.alert("Please fill in all required table.")
       return
     }
     
-    const newPrescription = {
-      id: Date.now().toString(),
-      ...popUpInput,
-    }
-
     // Create the updated array first
     const updatedPrescriptions = [...prescription, newPrescription];
 
     try{
-      await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(updatedPrescriptions))
+      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(updatedPrescriptions))
       setPrescription(updatedPrescriptions)
       console.log('Data save successfully.')
     }
@@ -55,25 +52,22 @@ const Prescription = () => {
     }
   }
 
-  useEffect( () => {
-    const loadPrescription = async () => {
-      try{
-        const storedPrescription = await AsyncStorage.getItem('prescriptionRecord')
-        if(storedPrescription)
-          setPrescription(JSON.parse(storedPrescription))
-        console.log('Data load successfully.')
-      }
-      catch(e){
-        console.log('Loading Error', e)
-      }
+  const loadPrescription = async () => {
+    try{
+      const storedPrescription = await AsyncStorage.getItem(`prescriptionRecord_${user?.userID}`)
+      if(storedPrescription)
+        setPrescription(JSON.parse(storedPrescription))
+      console.log('Data load successfully.')
     }
-    loadPrescription()
-  },[])
+    catch(e){
+      console.log('Loading Error', e)
+    }
+  }
 
   const handleDelete = async (id: string) => {
     try{
-      const updatedPrescriptions = prescription.filter(item => item.id !== id)
-      await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(updatedPrescriptions))
+      const updatedPrescriptions = prescription.filter(item => item.timeID !== id)
+      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(updatedPrescriptions))
       setPrescription(updatedPrescriptions)
       console.log('Data delete successfully.')
     }
@@ -86,12 +80,12 @@ const Prescription = () => {
     const dataToSend = {
       ...popUpInput,
       timeID: Date.now().toString(),
-      userID: user?.userID,
+      userID: user!.userID,
       formType: 'prescription'
     }
   
     try {
-      await saveToStorage()
+      await saveToStorage(dataToSend)
       const response = await fetch("https://appinput.azurewebsites.net/api/SavePetPrescription?", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -122,6 +116,7 @@ const Prescription = () => {
 
       const loadFromDatabase = async () => {  
         try {
+          await loadPrescription()
           const formType = 'prescription'
           const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?userID=${user?.userID}&formType=${formType}`, {
             method: "GET",
@@ -139,27 +134,55 @@ const Prescription = () => {
       
           if (result && Array.isArray(result)) {
             setPrescription(result)
-            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
+            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(result))
           } else if (result && typeof result === "object") {
             const prescriptionsArray = [result]
             setPrescription(prescriptionsArray)
-            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
+            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(prescriptionsArray))
           } else {
             throw new Error('Invalid response format')
           }
         } 
         catch (e) {
-          console.error("Error loading prescriptions from database:", e)
+          console.warn("Error loading prescriptions from database:", e)
         }
       }
       loadFromDatabase()
     },[user]))
 
+  const deleteInDatabase = async ( timeID:string ) => {
+    try{
+      await handleDelete(timeID)
+      console.log('timeID', timeID)
+      console.log('userID', user?.userID)
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeletePrescription?userID=${user?.userID}&timeID=${timeID}`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'}
+      })
+      const resultText = await response.text()
+
+      if (!response.ok) {
+        throw new Error(resultText || 'Failed to delete prescription')
+      }
+
+      // Only parse JSON if body is not empty
+      if (resultText.trim()) {
+        const result = JSON.parse(resultText)
+        console.log('Deleted from database:', result)
+      } else {
+        console.log('Deleted from database: No response body')
+      }
+    }
+    catch(e){
+      console.error('Deleting error: ', e)
+    }
+  }
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <ScrollView contentContainerStyle={styles.scroll}>
       {prescription.map((item) => (
-        <View key={item.id} style={styles.record}>
+        <View key={item.timeID} style={styles.record}>
           <View style={styles.recordTitleIconLeft}>
             <MaterialCommunityIcons name="pill" size={40} color="black" />
             <Text style={styles.recordTitle}>{item.vaccine}</Text>
@@ -168,7 +191,7 @@ const Prescription = () => {
           <Text>{item.vet}</Text>
           <Text>Expires: {item.date}</Text>
 
-          <Pressable onPress={() => handleDelete(item.id)} style={styles.remove}>
+          <Pressable onPress={() => deleteInDatabase(item.timeID)} style={styles.remove}>
             <Text style={{color:'red', fontSize: 20}}>Remove</Text>
           </Pressable>
         </View>

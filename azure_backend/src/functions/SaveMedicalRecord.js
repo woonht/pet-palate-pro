@@ -49,17 +49,11 @@ app.http('SaveMedicalRecord', {
             const database = client.database(dbName);
             const container = database.container("MedicalRecords");
 
-            itemToSave.id = `${medical_record_data.userID}_${Date.now()}`;
+            itemToSave.id = `${medical_record_data.userID}_${medical_record_data.timeID}`;
+            itemToSave.recID = itemToSave.id;
 
-            let resource;
-            if(itemToSave.id){
-                const { resource: updatedResource } = await container.items.upsert(itemToSave);
-                resource = updatedResource;
-            }
-            else{
-                const { resource: createdResource } = await container.items.upsert(itemToSave);
-                resource = createdResource;
-            }
+            const { resource } = await container.items.upsert(itemToSave);
+
             return{
                 status: 200,
                 headers: { "Content-Type": "application/json" },

@@ -29,7 +29,6 @@ const SettingsPage = () => {
     try {
       await GoogleSignin.signOut() // Sign out from Google
       setUser(null);               // Clear user context
-      await AsyncStorage.clear()
       router.replace('/(tabs)/auth/sign_in') // Navigate to sign in screen      
       Toast.show({
           type: 'success',

@@ -13,39 +13,41 @@ app.http('DeletePrescription', {
   handler: async (request, context) => {
     context.log('DeletePrescription triggered');
 
-    const petId = request.query.get("petId");
+    const userID = request.query.get("userID");
+    const timeID = request.query.get("timeID");
 
-    if (!petId || !prescriptionId) {
+    if (!userID || !timeID) {
       return {
         status: 400,
         body: JSON.stringify({ 
-          error: "Both petId and prescriptionId are required in query parameters." 
+          error: "userID and timeID are required in query parameters." 
         }),
       };
     }
 
     const container = client.database(dbName).container("Prescription");
+    const id = `${userID}_${timeID}`;
 
     try {
-      const { statusCode } = await container.item(prescriptionId, petId).delete();
-      
-      if (statusCode === 204) {
+      try{
+        await container.item(id, id).delete();
         return {
           status: 200,
           body: JSON.stringify({ 
             message: "Prescription deleted successfully" 
           })
+        };        
+      }
+      catch(error){
+        return {
+          status: 404,
+          body: JSON.stringify({ 
+            error: error.message ||"Prescription not found" 
+          })
         };
       }
-
-      return {
-        status: 404,
-        body: JSON.stringify({ 
-          error: "Prescription not found" 
-        })
-      };
-
-    } catch (error) {
+    } 
+    catch (error) {
       context.log.error('Error deleting prescription:', error);
       return {
         status: 500,
