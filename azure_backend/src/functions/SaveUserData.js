@@ -34,9 +34,13 @@ app.http('SaveUserData', {
             const database = client.database(dbName);
             const container = database.container("UserData");
 
+            const { resources: allUsers } = await container.items.query("SELECT VALUE COUNT(1) FROM c").fetchAll(); // COUNT(1) OR COUNT(*) both count total document
+            const number = allUsers[0] + 1;
+            
             const itemToSave = {
                 ...user_data,
-                timeStamp: new Date().toISOString
+                timeStamp: new Date().toISOString(),
+                device_id: `pet_feeder_${number}`
             };
 
             itemToSave.id = user_data.userID;

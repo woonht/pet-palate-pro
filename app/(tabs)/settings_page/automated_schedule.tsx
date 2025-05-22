@@ -6,80 +6,75 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import Swipeable, { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-
-type Entry = {
-  id: string;
-  time: Date;
-};
-
-const STORAGE_KEY = "timelist";
+import { useAuth } from "@/app/auth_context"
 
 const AutomatedSchedule = () => {
-  const [time, setTime] = useState(new Date());
-  const [isVisible, setIsVisible] = useState(false);
-  const [isToggle, setIsToggle] = useState<boolean[]>([]);
-  const [timelist, setTimeList] = useState<Entry[]>([]);
+  const [time, setTime] = useState(new Date())
+  const [isVisible, setIsVisible] = useState(false)
+  const [isToggle, setIsToggle] = useState<boolean[]>([])
+  const [timelist, setTimeList] = useState<ScheduleType[]>([])
+  const { user } = useAuth()
+  
+  type ScheduleType = {
+    userID: string;
+    timeID: string;
+    time: Date;
+  }
 
   // refs to the Swipeable methods for each row
-  const swipeableRefs = useRef<Array<SwipeableMethods | null>>([]);
+  const swipeableRefs = useRef<Array<SwipeableMethods | null>>([])
 
-  const formatTime = (date: Date) =>
-    date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) // [] use system default locale (kl-GL)
+  }
 
-  const saveTimeList = async (list: Entry[]) => {
+  const saveTimeList = async (list: ScheduleType[]) => {
     try {
-      // persist as [{ id, time: ISOString }]
-      const toStore = list.map((e) => ({
-        id: e.id,
+      const toStore = list.map((e) => ({ // use .map() when need to change the structure or format of the data before saving (.toISOstring())
+        userID: user?.userID,
+        timeID: e.timeID,
         time: e.time.toISOString(),
       }));
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toStore));
-    } catch (e) {
-      console.log("Saving Error:", e);
+      await AsyncStorage.setItem(`schedule_${user?.userID}`, JSON.stringify(toStore))
+    } 
+    catch (e) {
+      console.error("Saving Error:", e)
     }
-  };
+  }
 
   const loadTimeList = async () => {
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (!stored) return;
+      const stored = await AsyncStorage.getItem(`schedule_${user?.userID}`)
+      if (!stored) return
 
-      const parsed = JSON.parse(stored);
+      const parsed = JSON.parse(stored)
 
-      let entries: Entry[];
+      let entries: ScheduleType[]
 
-      // old format was simply an array of ISO strings
-      if (Array.isArray(parsed) && parsed.every((x) => typeof x === "string")) {
-        entries = (parsed as string[]).map((iso) => ({
-          id: Date.now().toString() + Math.random(),
-          time: new Date(iso),
-        }));
-      }
-      // new format is array of {id, time}
-      else if (
-        Array.isArray(parsed) &&
-        parsed.every((x) => x && typeof x === "object")
-      ) {
+      if ( Array.isArray(parsed) && parsed.every((x) => x && typeof x === "object")) {
         entries = (parsed as { id: string; time: string }[]).map(
           ({ id, time }) => ({
-            id,
+            userID: user?.userID ?? "",
+            timeID: id,
             time: new Date(time),
           })
-        );
-      } else {
-        entries = [];
+        )
+      }   
+      else {
+        entries = []
       }
 
-      setTimeList(entries);
-      setIsToggle(new Array(entries.length).fill(false));
-    } catch (e) {
-      console.log("Loading Error:", e);
+      setTimeList(entries)
+      setIsToggle(new Array(entries.length).fill(false))
+    } 
+    catch (e) {
+      console.error("Loading Error:", e);
     }
-  };
+  }
 
   useEffect(() => {
     loadTimeList();
-  }, []);
+  }, [])
 
   const onChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     if (event.type === "dismissed") {
@@ -90,8 +85,9 @@ const AutomatedSchedule = () => {
     setIsVisible(false);
 
     if (selectedTime) {
-      const newEntry: Entry = {
-        id: Date.now().toString(),
+      const newEntry: ScheduleType = {
+        userID: user?.userID ?? "",
+        timeID: Date.now().toString(),
         time: selectedTime,
       };
       const updated = [...timelist, newEntry].sort(
@@ -149,7 +145,7 @@ const AutomatedSchedule = () => {
 
       {timelist.map((entry, index) => (
         <Swipeable
-          key={entry.id}
+          key={entry.timeID}
           ref={(ref) => {
             // using { … } ensures this returns void
             swipeableRefs.current[index] = ref;

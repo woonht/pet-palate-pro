@@ -7,6 +7,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const FoodDispense = () => {
 
+  const sendDispenseCommand = async (command:string) => {
+    try{
+      const response = await fetch('https://control7968.azurewebsites.net/api/send-command?', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ command })
+      })
+
+      const result = await response.text()
+      console.log('Command sent successfully.', result)
+    }
+    catch(e){
+      console.error('Sending error: ', e)
+    }
+  }
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') } style={styles.container}>
@@ -16,7 +32,7 @@ const FoodDispense = () => {
         </View>
       </PlatformPressable>
       <PlatformPressable 
-      onPress={() => Alert.alert('Food Dispense')}
+      onPress={() => sendDispenseCommand('dispense_food')}
       android_ripple={{ color:null }}
       style={styles.button}>
         <AntDesign name="pluscircle" size={150} color="#AA4600"/>
