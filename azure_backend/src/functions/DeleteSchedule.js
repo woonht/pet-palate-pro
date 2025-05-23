@@ -34,7 +34,7 @@ app.http('DeleteSchedule', {
         return {
           status: 200,
           body: JSON.stringify({ 
-            message: "Prescription deleted successfully" 
+            message: "Schedule deleted successfully" 
           })
         };        
       }
@@ -42,17 +42,17 @@ app.http('DeleteSchedule', {
         return {
           status: 404,
           body: JSON.stringify({ 
-            error: error.message ||"Prescription not found" 
+            error: error.message ||"Schedule not found" 
           })
         };
       }
     } 
     catch (error) {
-      context.log.error('Error deleting prescription:', error);
+      context.log.error('Error deleting schedule:', error);
       return {
         status: 500,
         body: JSON.stringify({ 
-          error: error.message || "Failed to delete prescription" 
+          error: error.message || "Failed to delete schedule" 
         })
       };
     }

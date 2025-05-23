@@ -1,12 +1,13 @@
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons"
 import { PlatformPressable } from "@react-navigation/elements"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useCallback, useRef, useState } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import Swipeable, { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "@/app/auth_context"
+import { useFocusEffect } from "expo-router"
 
 const AutomatedSchedule = () => {
   const [time, setTime] = useState(new Date())
@@ -19,6 +20,7 @@ const AutomatedSchedule = () => {
     userID: string;
     timeID: string;
     time: Date;
+    formType: string;
   }
 
   // refs to the Swipeable methods for each row
@@ -28,13 +30,8 @@ const AutomatedSchedule = () => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) // [] use system default locale (kl-GL)
   }
 
-  const saveTimeList = async (list: ScheduleType[]) => {
+  const saveTimeList = async (toStore: {userID:string, timeID:string, time:string}[]) => {
     try {
-      const toStore = list.map((e) => ({ // use .map() when need to change the structure or format of the data before saving (.toISOstring())
-        userID: user?.userID,
-        timeID: e.timeID,
-        time: e.time.toISOString(),
-      }));
       await AsyncStorage.setItem(`schedule_${user?.userID}`, JSON.stringify(toStore))
     } 
     catch (e) {
@@ -52,11 +49,12 @@ const AutomatedSchedule = () => {
       let entries: ScheduleType[]
 
       if ( Array.isArray(parsed) && parsed.every((x) => x && typeof x === "object")) {
-        entries = (parsed as { id: string; time: string }[]).map(
-          ({ id, time }) => ({
+        entries = (parsed as { timeID: string; time: string }[]).map(
+          ({ timeID, time }) => ({
             userID: user?.userID ?? "",
-            timeID: id,
+            timeID: timeID,
             time: new Date(time),
+            formType: 'schedule'
           })
         )
       }   
@@ -68,60 +66,148 @@ const AutomatedSchedule = () => {
       setIsToggle(new Array(entries.length).fill(false))
     } 
     catch (e) {
-      console.error("Loading Error:", e);
+      console.error("Loading Error:", e)
     }
   }
 
-  useEffect(() => {
-    loadTimeList();
-  }, [])
+  const saveTimeToDatabase = async (list:ScheduleType[]) => {
+    const toStore = list.map((e) => ({ // use .map() when need to change the structure or format of the data before saving (.toISOstring())
+      userID: user!.userID,
+      timeID: e.timeID,
+      time: e.time.toISOString(),
+      formType: e.formType
+    }))
+
+    console.log(toStore)
+
+    try{
+      await saveTimeList(toStore)
+      const response = await fetch('https://appinput.azurewebsites.net/api/SaveSchedule?', {
+        method: "POST",
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(toStore)
+      })
+
+      const text = await response.text()
+      try {
+        const result = text ? JSON.parse(text) : {}
+        console.log('Time list successfully saved to database.', result)
+      } 
+      catch (e) {
+        console.warn('Could not parse JSON from save response:', text)
+      }
+    }
+    catch(e){
+      console.error('Saving error: ', e)
+    }
+  }
+
+  useFocusEffect(
+    useCallback( () => {
+      if (!user || !user.userID) {
+        console.warn('User not available yet.');
+        return
+      }
+      else{
+        console.log(user)
+      }
+
+      const loadTimeFromDatabase = async () => {
+        try{
+          await loadTimeList()
+          const formType = 'schedule'
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetSchedule?userID=${user?.userID}&formType=${formType}`, {
+            method: "GET",
+            headers: {'Content-Type': 'application/json'}
+          })
+    
+          const text = await response.text()
+          const result = JSON.parse(text)
+          console.log('Time list load successfully from database.', result)
+        }
+        catch(e){
+          console.error('Loading error: ', e)
+        }
+      }
+      loadTimeFromDatabase()
+    },[user]))
 
   const onChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     if (event.type === "dismissed") {
-      setIsVisible(false);
-      return;
+      setIsVisible(false)
+      return
     }
 
-    setIsVisible(false);
+    setIsVisible(false)
 
     if (selectedTime) {
       const newEntry: ScheduleType = {
         userID: user?.userID ?? "",
         timeID: Date.now().toString(),
         time: selectedTime,
-      };
+        formType: 'schedule'
+      }
       const updated = [...timelist, newEntry].sort(
         (a, b) => a.time.getTime() - b.time.getTime()
-      );
-      setTimeList(updated);
-      saveTimeList(updated);
-      setIsToggle(new Array(updated.length).fill(false));
-      setTime(selectedTime);
+      )
+      setTimeList(updated)
+      saveTimeToDatabase(updated)
+      setIsToggle(new Array(updated.length).fill(false))
+      setTime(selectedTime)
     }
-  };
+  }
 
   const toggleSwitch = (index: number) => {
     setIsToggle((toggles) =>
-      toggles.map((v, i) => (i === index ? !v : v))
-    );
-  };
+      toggles.map((v, i) => (i === index ? !v : v)) // .map() takes up 3 arguments (current_value, index, array)
+    )
+  }
 
   const removeTime = (index: number) => {
-    const ref = swipeableRefs.current[index];
-    if (ref) ref.close();
+    const ref = swipeableRefs.current[index]
+    if (ref) ref.close()
 
-    const updated = timelist.filter((_, i) => i !== index);
-    setTimeList(updated);
-    setIsToggle((t) => t.filter((_, i) => i !== index));
-    saveTimeList(updated);
-    swipeableRefs.current.splice(index, 1);
-  };
+    deleteInDatabase(index)
+
+    const updated = timelist.filter((_, i) => i !== index)
+    setTimeList(updated)
+    setIsToggle((t) => t.filter((_, i) => i !== index))
+    saveTimeToDatabase(updated)
+    swipeableRefs.current.splice(index, 1)
+  }
+
+  const deleteInDatabase = async (index: number) => {
+    const entry = timelist[index]
+    if (!entry) return
+
+    try {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteSchedule?userID=${entry.userID}&timeID=${entry.timeID}`, {
+        method: "DELETE",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userID: user?.userID,
+          timeID: entry.timeID,
+          formType: entry.formType,
+        }),
+      })
+
+      const text = await response.text()
+      try {
+        const result = text ? JSON.parse(text) : {}
+        console.log('Time entry successfully deleted from database.', result)
+      } catch (e) {
+        console.warn('Could not parse delete response JSON:', text)
+      }
+    } catch (e) {
+      console.error('Deleting error: ', e)
+    }
+  }
 
   const renderRightActions = (index: number) => (
     <Pressable onPress={() => removeTime(index)} style={styles.removeButton}>
       <Text style={styles.removeText}>Remove</Text>
     </Pressable>
-  );
+  )
 
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.whole_page}>

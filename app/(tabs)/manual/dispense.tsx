@@ -7,16 +7,22 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const FoodDispense = () => {
 
-  const sendDispenseCommand = async (command:string) => {
+  const sendDispenseCommand = async () => {
     try{
       const response = await fetch('https://control7968.azurewebsites.net/api/send-command?', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ command })
+        body: JSON.stringify({ command: 'dispense_food', deviceId: 'pet_feeder_1' })
       })
 
-      const result = await response.text()
-      console.log('Command sent successfully.', result)
+      const result = await response.text();
+
+      if (response.ok) {
+        console.log('Command sent successfully:', result);
+      } 
+      else {
+        console.warn('Failed to send command:', result);
+      }      
     }
     catch(e){
       console.error('Sending error: ', e)
@@ -31,12 +37,13 @@ const FoodDispense = () => {
           <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
         </View>
       </PlatformPressable>
-      <PlatformPressable 
-      onPress={() => sendDispenseCommand('dispense_food')}
-      android_ripple={{ color:null }}
-      style={styles.button}>
-        <AntDesign name="pluscircle" size={150} color="#AA4600"/>
-      </PlatformPressable>
+      <View style={styles.button}>
+        <PlatformPressable 
+        onPress={() => sendDispenseCommand()}
+        >
+          <AntDesign name="pluscircle" size={150} color="#AA4600"/>
+        </PlatformPressable>
+      </View>
     </SafeAreaView>
   )
 }
@@ -70,8 +77,10 @@ const styles = StyleSheet.create({
   button: {
     
     flex: 1,
+    position: 'absolute',
+    top: '40%',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignSelf: 'center',
   }
 })
 export default FoodDispense
