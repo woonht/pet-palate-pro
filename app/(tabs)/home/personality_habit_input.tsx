@@ -1,9 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
+import { useTextSize } from "@/app/text_size_context"
 
 const UserInput = () => {
   const [input, setInput] = useState({
@@ -13,6 +14,8 @@ const UserInput = () => {
     dislike:'',
   })
   const { user } = useAuth()
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
 
   const handleChange = (key:string, value:string) => {
       setInput(prev => ({ ...prev, [key]: value }))
@@ -119,11 +122,9 @@ const UserInput = () => {
   },[user]) // <-- re-run when user changes
 
   const empty = () => {
-    setInput({    
-      temperament:'',
-      skills:'',
-      like:'',
-      dislike:''})
+    Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 
+      [{text: 'No', style: "cancel"}, 
+        {text: 'Clear', style: "destructive", onPress: () => setInput({ temperament:'', skills:'', like:'', dislike:''} )}] )
   }
 
   return(
@@ -131,7 +132,7 @@ const UserInput = () => {
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
 
         <View style={styles.container}>
-            <Text>Temperament:</Text>
+            <Text style={text.settings_text}>Temperament:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Friendly, Playful"
@@ -141,7 +142,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Skills:</Text>
+            <Text style={text.settings_text}>Skills:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Hand Shake, Sit, Stand"
@@ -151,7 +152,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Like:</Text>
+            <Text style={text.settings_text}>Like:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Ball, Park Walking"
@@ -161,7 +162,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Dislike:</Text>
+            <Text style={text.settings_text}>Dislike:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Thunder, Firework"
@@ -169,14 +170,16 @@ const UserInput = () => {
                 value={input.dislike}
                 onChangeText={(text) => handleChange('dislike', text)}
                 />
-        </View>        
+        </View>
 
-        <Pressable onPress={savePetPersonalityHabitToDatabase}>
-          <Text>Save</Text>
-        </Pressable>
-        <Pressable onPress={empty}>
-          <Text>Empty</Text>
-        </Pressable>
+        <View style={styles.save_empty}>
+          <Pressable onPress={empty}>
+            <Text style={text.settings_text}>Empty</Text>
+          </Pressable>
+          <Pressable onPress={savePetPersonalityHabitToDatabase}>
+            <Text style={text.settings_text}>Save</Text>
+          </Pressable>
+        </View>
 
     </SafeAreaView>
   )
@@ -203,6 +206,25 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 10,
     marginBottom: 10,
+  },
+
+  save_empty: {
+
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+  }, 
+})
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
   },
 })
 

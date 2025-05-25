@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from "react"
 import { Pressable, StyleSheet, Text, View, Image, Platform, Alert, Modal, ImageBackground, useWindowDimensions } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
+import { useTextSize } from "@/app/text_size_context"
 
 const Profile = () => {
 
@@ -22,6 +23,8 @@ const Profile = () => {
     const [menuVisible, setMenuVisible] = useState(false)
     const { width, height } = useWindowDimensions()
     const { user } = useAuth()  
+    const { textSize } = useTextSize()
+    const text = dynamicStyles(textSize)
 
     useEffect(() => {
         (async () => {
@@ -171,97 +174,99 @@ const Profile = () => {
             
             <View style={styles.basic_info}>
                 <View>
-                    <Image source={ image ? { uri: image } : defaultprofile } style={[styles.image, !image && styles.defaultImage]}/>
-                    <Pressable onPress={ () => setMenuVisible(true) } style={styles.imagePosition}>
-                        <Octicons name="image" size={24} color="black" />
-                    </Pressable>
-                </View>
-
-                <Modal
-                    animationType="fade"
-                    transparent={true}
-                    onRequestClose={ () => setMenuVisible(false) }
-                    visible={menuVisible}
-                >
-                    <View style={styles.modalBackground}>
-                        <View style={styles.popUp}>
-                            <Pressable onPress={ () => pickImage()}>
-                                <View style={styles.popUpOption}>
-                                    <Text style={styles.popUpText}>Choose from Album</Text>
-                                </View>
-                            </Pressable>
-                            <Pressable onPress={ () => viewImage()}>
-                                <View style={styles.popUpOption}>
-                                    <Text style={styles.popUpText}>View image</Text>
-                                </View>
-                            </Pressable>
-                            <Pressable onPress={ backToDefault }>
-                                <View style={styles.popUpOption}>
-                                    <Text style={styles.popUpText}>Return to default</Text>
-                                </View>
-                            </Pressable>
-                            <Pressable onPress={ () => setMenuVisible(false) }>
-                                <View style={styles.popUpOption}>
-                                    <Text style={styles.popUpText}>Cancel</Text>
-                                </View>
-                            </Pressable>
-                        </View>
+                    <View style={styles.imageContainer}>
+                        <Image source={ image ? { uri: image } : defaultprofile } style={[styles.image, !image && styles.defaultImage]}/>
+                        <Pressable onPress={ () => setMenuVisible(true) } style={styles.imagePosition}>
+                            <Octicons name="image" size={24} color="black" />
+                        </Pressable>
                     </View>
-                </Modal>
 
-                <Modal
-                    visible= {profilePictureVisible}
-                    transparent= {false}
-                    animationType="fade"
-                    onRequestClose={ () => setProfilePictureVisible(false) }
-                    >
-                    <ImageBackground source={{uri:image}} style={styles.backgroundImage} blurRadius={10}>
-                        <View style={styles.modalBackground}>
-                            {image && ( // only evaluate and render what's after && if image is truthy
-                                <Image source={{ uri: image }} style={styles.fullImage} resizeMode="contain" />
-                            )}
-                            <Pressable onPress={() => setProfilePictureVisible(false)} style={styles.exitImage}>
-                                <Text>X</Text>
-                            </Pressable>
+                    <View style={styles.columnText}>
+                        <Pressable onPress={ ()=> router.push('/(tabs)/home/basic_info') }>
+                            <View style={styles.to_basic_info}>
+                                <Text style={[text.settings_title, {fontWeight:'bold'}]}>{basic_info.name || 'Name'}</Text> 
+                                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+                            </View>
+                        </Pressable>
+                        <View style={styles.rowText}>
+                            <View style={styles.IconTextLeft_BasicInfo}>
+                                <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
+                                <Text style={text.settings_text}>{basic_info.sex || 'Sex'}</Text>
+                            </View>
+                            <View style={styles.IconTextLeft_BasicInfo}>
+                                <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
+                                <Text style={text.settings_text}>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
+                            </View>
                         </View>
-                    </ImageBackground>
-                </Modal>
-
-                <View style={styles.columnText}>
-                    <Pressable onPress={ ()=> router.push('/(tabs)/home/basic_info') }>
-                        <View style={styles.to_basic_info}>
-                            <Text style={{fontWeight: 'bold', fontSize: 24}}>{basic_info.name || 'Name'}</Text> 
-                            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-                        </View>
-                    </Pressable>
-                    <View style={styles.rowText}>
-                        <View style={styles.IconTextLeft}>
-                            <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
-                            <Text>{basic_info.sex || 'Sex'}</Text>
-                        </View>
-                        <View style={styles.IconTextLeft}>
-                            <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
-                            <Text>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
-                        </View>
-                    </View>
-                    <View style={styles.rowText}>
-                        <View style={styles.IconTextLeft}>
-                            <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />
-                            <Text>{basic_info.species || 'Species'}</Text>
-                        </View>
-                        <View style={styles.IconTextLeft}>
-                            <FontAwesome5 name="weight" size={24} color="#AA4600" />
-                            <Text>{basic_info.weight || '0 kg'}</Text>
+                        <View style={styles.rowText}>
+                            <View style={styles.IconTextLeft_BasicInfo}>
+                                <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />
+                                <Text style={text.settings_text}>{basic_info.species || 'Species'}</Text>
+                            </View>
+                            <View style={styles.IconTextLeft_BasicInfo}>
+                                <FontAwesome5 name="weight" size={24} color="#AA4600" />
+                                <Text style={text.settings_text}>{basic_info.weight || '0 kg'}</Text>
+                            </View>
                         </View>
                     </View>
                 </View>
             </View>
+
+            <Modal
+                animationType="fade"
+                transparent={true}
+                onRequestClose={ () => setMenuVisible(false) }
+                visible={menuVisible}
+            >
+                <View style={styles.modalBackground}>
+                    <View style={styles.popUp}>
+                        <Pressable onPress={ () => pickImage()}>
+                            <View style={styles.popUpOption}>
+                                <Text style={[styles.popUpText, text.settings_text]}>Choose from Album</Text>
+                            </View>
+                        </Pressable>
+                        <Pressable onPress={ () => viewImage()}>
+                            <View style={styles.popUpOption}>
+                                <Text style={[styles.popUpText, text.settings_text]}>View image</Text>
+                            </View>
+                        </Pressable>
+                        <Pressable onPress={ backToDefault }>
+                            <View style={styles.popUpOption}>
+                                <Text style={[styles.popUpText, text.settings_text]}>Return to default</Text>
+                            </View>
+                        </Pressable>
+                        <Pressable onPress={ () => setMenuVisible(false) }>
+                            <View style={styles.popUpOption}>
+                                <Text style={[styles.popUpText, text.settings_text]}>Cancel</Text>
+                            </View>
+                        </Pressable>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal
+                visible= {profilePictureVisible}
+                transparent= {false}
+                animationType="fade"
+                onRequestClose={ () => setProfilePictureVisible(false) }
+                >
+                <ImageBackground source={{uri:image}} style={styles.backgroundImage} blurRadius={10}>
+                    <View style={styles.modalBackground}>
+                        {image && ( // only evaluate and render what's after && if image is truthy
+                            <Image source={{ uri: image }} style={styles.fullImage} resizeMode="contain" />
+                        )}
+                        <Pressable onPress={() => setProfilePictureVisible(false)} style={styles.exitImage}>
+                            <Text>X</Text>
+                        </Pressable>
+                    </View>
+                </ImageBackground>
+            </Modal>
             
             <Pressable onPress={ ()=> router.push('/(tabs)/home/medical_record') }>
                 <View style={styles.medical_record}>
                     <View style={styles.IconTextLeft}>
                         <FontAwesome5 name="book-medical" size={24} color="#AA4600" />
-                        <Text>Medical Record</Text>
+                        <Text style={text.settings_text}>Medical Record</Text>
                     </View> 
                     <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
                 </View>            
@@ -271,7 +276,7 @@ const Profile = () => {
                 <View style={styles.prescription}>
                     <View style={styles.IconTextLeft}>
                         <MaterialCommunityIcons name="pill" size={24} color="#AA4600" />
-                        <Text>Prescription</Text>
+                        <Text style={text.settings_text}>Prescription</Text>
                     </View> 
                     <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
                 </View>            
@@ -296,12 +301,17 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         borderRadius: 25,
         width: '90%',
-        height: '52%',
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
         paddingInline: 20,
         padding: 10,
+    },
+
+    imageContainer: {
+    
+        position: 'relative',
+        marginBottom: 15, 
     },
 
     to_basic_info: {
@@ -310,6 +320,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '100%',
         alignItems:'center',
+        marginBottom: 10,
     },
 
     medical_record:{
@@ -336,12 +347,20 @@ const styles = StyleSheet.create({
         padding: 5
     },
 
+    IconTextLeft_BasicInfo: {
+
+        alignItems: 'center',
+        flexDirection: 'row',
+        gap: 10,
+        width: '44%',
+    },
+
     IconTextLeft: {
 
         alignItems: 'center',
         flexDirection: 'row',
         gap: 10,
-        flex: 1
+        flex: 1, 
     },
 
     image: {
@@ -393,7 +412,6 @@ const styles = StyleSheet.create({
  
     columnText: {
 
-        flex: 1,
         justifyContent: 'space-around',
     },
     
@@ -402,6 +420,7 @@ const styles = StyleSheet.create({
         width: "100%",
         flexDirection: 'row',
         justifyContent: 'space-between',
+        marginBottom: 10,
     },
 
     modalBackground: {
@@ -433,6 +452,18 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
         fontSize: 16,
     },
+})
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
 })
 
 export default Profile

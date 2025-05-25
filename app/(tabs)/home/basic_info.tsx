@@ -1,11 +1,12 @@
 import { FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
 import { router} from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/app/auth_context"
+import { useTextSize } from "@/app/text_size_context";
 
 const BasicInfo = () => {
 
@@ -24,6 +25,8 @@ const BasicInfo = () => {
     dislike:'',
   })
   const { user } = useAuth()  
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
 
   useFocusEffect(
     useCallback(() => {
@@ -161,131 +164,134 @@ const BasicInfo = () => {
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={[styles.whole_page]}>
-      <View style={styles.basic_habit_container}>
-        <View style={styles.title_info_separate}>
-          <View style={styles.editIconRight}>
-            <Text style={styles.basic_info_title}>Basic Information</Text>
-            <Pressable onPress={()=> router.push('/(tabs)/home/basic_info_input')} style={styles.editIconRight}>
-              <Text>Edit</Text>
-              <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </Pressable>
-          </View>
-
-          <View style={styles.columnText}>
-            <View style={styles.rowText}>
-            
-              <View style={{flex: 1}}>
-                <View style={styles.textIcon}>
-                  <MaterialCommunityIcons name="tag-text" size={24} color="#AA4600" />                  
-                  <View>
-                    <Text style={styles.basic_info}>Name</Text>
-                    <Text>{basic_info.name || 'Bobby'}</Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={{flex: 1}}> 
-                <View style={styles.textIcon}>
-                  <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
-                  <View>
-                    <Text style={styles.basic_info}>Birthdate</Text>
-                    <Text>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-            
-            <View style={styles.rowText}>
-              
-              <View style={{flex: 1}}>
-                <View style={styles.textIcon}>
-                  <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />                
-                  <View>
-                    <Text style={styles.basic_info}>Species</Text>
-                    <Text>{basic_info.species || 'Dog'}</Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={{flex: 1}}>
-                <View style={styles.textIcon}>
-                  <FontAwesome5 name="dog" size={24} color="#AA4600" />
-                  <View>
-                    <Text style={styles.basic_info}>Breed</Text>
-                    <Text>{basic_info.breed || 'Golden Retriever'}</Text>
-                  </View>
-                </View>
-              </View>
+      <ScrollView contentContainerStyle={styles.scroll}>
+      
+        <View style={styles.basic_habit_container}>
+          <View style={styles.title_info_separate}>
+            <View style={styles.editIconRight}>
+              <Text style={[styles.basic_info_title, text.settings_title]}>Basic Information</Text>
+              <Pressable onPress={()=> router.push('/(tabs)/home/basic_info_input')} style={styles.editIconRight}>
+                <Text style={text.settings_text}>Edit</Text>
+                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+              </Pressable>
             </View>
 
-            <View style={styles.rowText}>
-
-              <View style={{flex:1}}>
-                <View style={styles.textIcon}>
-                  <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
-                  <View>
-                    <Text style={styles.basic_info}>Sex</Text>
-                    <Text>{basic_info.sex || 'Male'}</Text>
+            <View style={styles.columnText}>
+              <View style={styles.rowText}>
+              
+                <View style={{flex: 1}}>
+                  <View style={styles.textIcon}>
+                    <MaterialCommunityIcons name="tag-text" size={24} color="#AA4600" />                  
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Name</Text>
+                      <Text style={text.settings_text}>{basic_info.name || 'Bobby'}</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={{flex: 1}}> 
+                  <View style={styles.textIcon}>
+                    <FontAwesome name="birthday-cake" size={24} color="#AA4600" />
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Birthdate</Text>
+                      <Text style={text.settings_text}>{basic_info.birthdate || 'DD-MM-YYYY'}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.rowText}>
+                
+                <View style={{flex: 1}}>
+                  <View style={styles.textIcon}>
+                    <MaterialCommunityIcons name="dna" size={24} color="#AA4600" />                
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Species</Text>
+                      <Text style={text.settings_text}>{basic_info.species || 'Dog'}</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={{flex: 1}}>
+                  <View style={styles.textIcon}>
+                    <FontAwesome5 name="dog" size={24} color="#AA4600" />
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Breed</Text>
+                      <Text style={text.settings_text}>{basic_info.breed || 'Golden Retriever'}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
 
-              <View style={{flex:1}}>
-                <View style={styles.textIcon}>
-                  <FontAwesome5 name="weight" size={24} color="#AA4600" />
-                  <View>
-                    <Text style={styles.basic_info}>Weight</Text>
-                    <Text>{basic_info.weight || '0 kg'}</Text>
+              <View style={styles.rowText}>
+
+                <View style={{flex:1}}>
+                  <View style={styles.textIcon}>
+                    <MaterialCommunityIcons name="gender-male-female" size={24} color="#AA4600" />
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Sex</Text>
+                      <Text style={text.settings_text}>{basic_info.sex || 'Male'}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={{flex:1}}>
+                  <View style={styles.textIcon}>
+                    <FontAwesome5 name="weight" size={24} color="#AA4600" />
+                    <View>
+                      <Text style={[styles.basic_info, text.settings_subtitle]}>Weight</Text>
+                      <Text style={text.settings_text}>{basic_info.weight || '0 kg'}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
-      <View style={styles.basic_habit_container}>
-        <View style={styles.title_info_separate}>
-          <View style={styles.editIconRight}>
-            <Text style={styles.basic_info_title}>Personality and Habits</Text>
-            <Pressable onPress={()=> router.push('/(tabs)/home/personality_habit_input')} style={styles.editIconRight}>
-              <Text>Edit</Text>
-              <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </Pressable>
-          </View>
-          <View style={styles.columnText}>
-            <View style={styles.textIcon}>
-              <FontAwesome5 name="list-alt" size={24} color="#AA4600" />
-              <View>
-                <Text style={styles.basic_info}>Temperament</Text>
-                <Text>{personality_habit.temperament || 'Friendly'}</Text>
-              </View>
+        <View style={styles.basic_habit_container}>
+          <View style={styles.title_info_separate}>
+            <View style={styles.editIconRight}>
+              <Text style={[styles.basic_info_title, text.settings_title]}>Personality and Habits</Text>
+              <Pressable onPress={()=> router.push('/(tabs)/home/personality_habit_input')} style={styles.editIconRight}>
+                <Text style={text.settings_text}>Edit</Text>
+                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+              </Pressable>
             </View>
-            <View style={styles.textIcon}>
-              <FontAwesome name="book" size={24} color="#AA4600" />
-              <View>
-                <Text style={styles.basic_info}>Skills</Text>
-                <Text>{personality_habit.skills || 'Hand Shake'}</Text>
+            <View style={styles.columnText}>
+              <View style={styles.textIcon}>
+                <FontAwesome5 name="list-alt" size={24} color="#AA4600" />
+                <View>
+                  <Text style={[styles.basic_info, text.settings_subtitle]}>Temperament</Text>
+                  <Text style={text.settings_text}>{personality_habit.temperament || 'Friendly'}</Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.textIcon}>
-              <Ionicons name="heart" size={24} color="#AA4600" />
-              <View>
-                <Text style={styles.basic_info}>Like</Text>
-                <Text>{personality_habit.like || 'Walk in park'}</Text>
+              <View style={styles.textIcon}>
+                <FontAwesome name="book" size={24} color="#AA4600" />
+                <View>
+                  <Text style={[styles.basic_info, text.settings_subtitle]}>Skills</Text>
+                  <Text style={text.settings_text}>{personality_habit.skills || 'Hand Shake'}</Text>
+                </View>
               </View>
-            </View>
-            <View style={styles.textIcon}>
-              <Ionicons name="heart-dislike" size={24} color="#AA4600" />
-              <View>
-                <Text style={styles.basic_info}>Dislike</Text>
-                <Text>{personality_habit.dislike || 'Thunder'}</Text>
+              <View style={styles.textIcon}>
+                <Ionicons name="heart" size={24} color="#AA4600" />
+                <View>
+                  <Text style={[styles.basic_info, text.settings_subtitle]}>Like</Text>
+                  <Text style={text.settings_text}>{personality_habit.like || 'Walk in park'}</Text>
+                </View>
+              </View>
+              <View style={styles.textIcon}>
+                <Ionicons name="heart-dislike" size={24} color="#AA4600" />
+                <View>
+                  <Text style={[styles.basic_info, text.settings_subtitle]}>Dislike</Text>
+                  <Text style={text.settings_text}>{personality_habit.dislike || 'Thunder'}</Text>
+                </View>
               </View>
             </View>
           </View>
         </View>
-      </View>
 
+      </ScrollView>
     </SafeAreaView>
   )
 }
@@ -301,10 +307,17 @@ const styles = StyleSheet.create({
         gap: 10,
     },
 
+    scroll: {
+
+      paddingTop: 10,
+      alignItems: 'center',
+      gap: 10,
+    },
+
     basic_habit_container: {
 
       backgroundColor: 'white',
-      width: '90%',
+      width: '95%',
       borderRadius: 25,
       padding: 10,
       paddingInline: 20,
@@ -315,6 +328,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent:'space-between',
+      flexWrap: 'wrap',
     },
 
     textIcon: {
@@ -322,6 +336,7 @@ const styles = StyleSheet.create({
       flexDirection:'row',
       alignItems: 'center',
       gap: 10,
+      width: '90%'
     },
 
     rowText:{
@@ -341,19 +356,34 @@ const styles = StyleSheet.create({
     basic_info_title: {
 
       fontWeight: 'bold',
-      fontSize: 24
     },    
     
     basic_info: {
 
       fontWeight: 'bold',
-      fontSize: 18
     },
 
     title_info_separate:{
 
       gap: 20    
     },
+})
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_subtitle: {
+
+    fontSize: textSize*1.2
+  },  
+  
+  settings_title: {
+
+    fontSize: textSize*1.4
+  },
 })
 
 export default BasicInfo

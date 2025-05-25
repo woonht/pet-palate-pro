@@ -1,9 +1,10 @@
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from "@/app/auth_context"
+import { useTextSize } from "@/app/text_size_context";
 
 const UserInput = () => {
 
@@ -16,6 +17,8 @@ const UserInput = () => {
     weight:'',
   })
   const { user } = useAuth()  
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
 
   useEffect( () => {
     const loadPetInfoFromStorage = async () => {
@@ -124,13 +127,9 @@ const UserInput = () => {
   },[user]) // <-- re-run when user changes
 
   const empty = () => {
-    setInput({    
-      name:'',
-      birthdate:'',
-      species:'',
-      breed:'',
-      sex:'',
-      weight:'',})
+    Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 
+      [{text: 'No', style: "cancel"}, 
+        {text: 'Clear', style: "destructive", onPress: () => setInput({ name:'', birthdate:'', species:'', breed:'' ,sex:'', weight:''} )}] )
   }
 
   return(
@@ -138,7 +137,7 @@ const UserInput = () => {
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
 
         <View style={styles.container}>
-            <Text>Name:</Text>
+            <Text style={text.settings_text}>Name:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Enter pet's name"
@@ -148,7 +147,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Birthdate:</Text>
+            <Text style={text.settings_text}>Birthdate:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="1-1-2020"
@@ -158,7 +157,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Species:</Text>
+            <Text style={text.settings_text}>Species:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Golden Retriever"
@@ -168,7 +167,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Breed:</Text>
+            <Text style={text.settings_text}>Breed:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Dog"
@@ -178,7 +177,7 @@ const UserInput = () => {
                 />
         </View>        
         <View style={styles.container}>
-            <Text>Sex:</Text>
+            <Text style={text.settings_text}>Sex:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="Male"
@@ -188,7 +187,7 @@ const UserInput = () => {
                 />
         </View>
         <View style={styles.container}>
-            <Text>Weight:</Text>
+            <Text style={text.settings_text}>Weight:</Text>
             <TextInput
                 style={styles.input}
                 placeholder="25kg"
@@ -198,12 +197,14 @@ const UserInput = () => {
                 />
         </View>
 
-      <Pressable onPress={savePetInfoToDatabase}>
-        <Text>Save</Text>
-      </Pressable>
-      <Pressable onPress={empty}>
-        <Text>Empty</Text>
-      </Pressable>
+      <View style={styles.save_empty}>
+        <Pressable onPress={empty}>
+          <Text style={text.settings_text}>Empty</Text>
+        </Pressable>
+        <Pressable onPress={savePetInfoToDatabase}>
+          <Text style={text.settings_text}>Save</Text>
+        </Pressable>
+      </View>
 
     </SafeAreaView>
   )
@@ -230,6 +231,25 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 10,
     marginBottom: 10,
+  },
+
+  save_empty: {
+
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+  }, 
+})
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
   },
 })
 

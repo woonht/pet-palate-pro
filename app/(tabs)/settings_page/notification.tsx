@@ -1,9 +1,10 @@
-  import { FontAwesome6 } from "@expo/vector-icons"
-  import React, { useEffect, useState } from "react"
-  import { Pressable, StyleSheet, Text, View } from "react-native"
-  import { SafeAreaView } from "react-native-safe-area-context"
-  import * as Notifications from 'expo-notifications'
-  import AsyncStorage from "@react-native-async-storage/async-storage"
+import { FontAwesome6 } from "@expo/vector-icons"
+import React, { useEffect, useState } from "react"
+import { Pressable, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import * as Notifications from 'expo-notifications'
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useTextSize } from "@/app/text_size_context"
 
   const Notification = () => {
 
@@ -12,7 +13,9 @@
     const [isEnableDispense, setIsEnableDispense] = useState(false)
     const [isEnableHydration,setIsEnableHydration] = useState(false)
     const [isEnableReminder, setIsEnableReminder] = useState(false)
-  
+    const { textSize } = useTextSize()
+    const text = dynamicStyles(textSize)
+    
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldPlaySound: true,
@@ -195,7 +198,7 @@
         <View style={styles.enable}>
           <Pressable onPress={ () => handleEnableNotification(!isEnable) }>
             <View style={styles.option}>
-              <Text>Enable</Text>
+              <Text style={text.settings_text}>Enable</Text>
               {isEnable ? 
               <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
               : <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
@@ -210,7 +213,7 @@
             
             <Pressable onPress={ () => handleLevelNotification(!isEnableLevel) }>
               <View style={styles.option}>
-                <Text>Food and Water Level</Text>
+                <Text style={text.settings_text}>Food and Water Level</Text>
                 {isEnableLevel ? 
                 <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
                 : <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
@@ -220,7 +223,7 @@
 
             <Pressable onPress={ () => handleDispenseNotification(!isEnableDispense) }>
               <View style={styles.option}>
-                <Text>Food Dispense</Text>
+                <Text style={text.settings_text}>Food Dispense</Text>
                 {isEnableDispense ? 
                 <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
                 : <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
@@ -230,7 +233,7 @@
 
             <Pressable onPress={ () => handleHydrationNotification(!isEnableHydration) }>
               <View style={styles.option}>
-                <Text>Hydration Monitoring</Text>
+                <Text style={text.settings_text}>Hydration Monitoring</Text>
                 {isEnableHydration ? 
                 <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
                 : <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
@@ -240,7 +243,7 @@
 
             <Pressable onPress={ () => handleReminderNotification(!isEnableReminder) }>
               <View style={styles.option}>
-                <Text>Reminder</Text>
+                <Text style={text.settings_text}>Reminder</Text>
                 {isEnableReminder ? 
                 <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
                 : <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
@@ -291,4 +294,16 @@
         },
   })
 
-  export default Notification
+  const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
+})
+
+export default Notification

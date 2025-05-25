@@ -1,6 +1,6 @@
 import { Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons"
 import { router, useFocusEffect } from "expo-router"
-import React, { useCallback, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import { Image, Modal, StyleSheet, TouchableOpacity } from "react-native"
 import { Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
@@ -8,6 +8,8 @@ import { useAuth } from "@/app/auth_context"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import Toast from 'react-native-toast-message'
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useTextSize } from "@/app/text_size_context"
+import Slider from '@react-native-community/slider'
 
 const SettingsPage = () => {
 
@@ -16,8 +18,21 @@ const SettingsPage = () => {
 
   const [isModeVisible, setModeIsVisible] = useState(false)
   const [descriptionVisible, setDescriptionVisible] = useState(false)
+  const [colorVisible, setColorVisible] = useState(false)
+  const [colorMode, setColorMode] = useState('normal')
   const [isDog, setIsDog] = useState(false)
   const [count, setCount] = useState(1)
+  const [sliderVisible, setSliderVisible] = useState(false)
+  const {textSize, setTextSize} = useTextSize()
+  const [tempTextSize, setTempTextSize] = useState(textSize)
+  const text = dynamicStyles(textSize)
+
+  const options = [
+    { label: 'Normal', value: 'normal' },
+    { label: 'Red-Green Color Blindness', value: 'red-green' },
+    { label: 'Blue-Yellow Color Blindness', value: 'blue-yellow' },
+    { label: 'Monochromacy', value: 'mono' },
+  ]
 
   useFocusEffect( // Auto-hide when navigating away from this screen
     useCallback(() => {
@@ -40,6 +55,12 @@ const SettingsPage = () => {
     }
   }
 
+  useEffect(() => {
+    if(sliderVisible){
+      setTempTextSize(textSize)
+    }
+  },[sliderVisible])
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       
@@ -59,8 +80,8 @@ const SettingsPage = () => {
             )}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.username}>{user?.name || 'Guest'}</Text>
-            <Text style={styles.email}>{user?.email}</Text>
+            <Text style={[text.settings_title, {fontWeight: 'bold'}]}>{user?.name || 'Guest'}</Text>
+            <Text style={[styles.email, text.settings_text]}>{user?.email}</Text>
           </View>
         </View>
       </View>
@@ -71,7 +92,7 @@ const SettingsPage = () => {
           <View style={styles.rowSettings}>
             <View style={styles.IconTextLeft}>
               <Ionicons name="notifications" size={24} color="black" />
-              <Text>Notification</Text>
+              <Text style={text.settings_text}>Notification</Text>
             </View> 
             <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
           </View>             
@@ -81,7 +102,7 @@ const SettingsPage = () => {
           <View style={styles.rowSettings}>
             <View style={styles.IconTextLeft}>
               <MaterialIcons name="schedule" size={24} color="black" />
-              <Text>Automated Schedule</Text>
+              <Text style={text.settings_text}>Automated Schedule</Text>
             </View> 
             <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
           </View>            
@@ -91,7 +112,7 @@ const SettingsPage = () => {
             <View style={styles.rowSettings}>
               <View style={styles.IconTextLeft}>
                 <Feather name="percent" size={24} color="black" />
-                <Text>Mode</Text>
+                <Text style={text.settings_text}>Mode</Text>
               </View> 
               <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
             </View>            
@@ -107,7 +128,7 @@ const SettingsPage = () => {
           <View style={styles.popUp}>
 
             <View style={styles.popUpOption}> 
-              <Text>Choose a Mode</Text>  
+              <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Choose a Mode</Text>  
               <TouchableOpacity onPress={() => setModeIsVisible(false)}>
                 <Entypo name="cross" size={24} color="red" />
               </TouchableOpacity>
@@ -115,7 +136,7 @@ const SettingsPage = () => {
 
             <TouchableOpacity onPress={()=> setIsDog(!isDog)}>
               <View style={styles.popUpOption}>
-                <Text>Dog</Text>
+                <Text style={text.settings_text}>Dog</Text>
                 {isDog ? 
                 (<MaterialIcons name="radio-button-unchecked" size={24} color="black" />): 
                 <MaterialIcons name="radio-button-checked" size={24} color="black" />
@@ -125,15 +146,13 @@ const SettingsPage = () => {
 
             <TouchableOpacity onPress={()=> setIsDog(!isDog)}>
               <View style={styles.popUpOption}>
-                <Text>Cat</Text>
+                <Text style={text.settings_text}>Cat</Text>
                 {isDog ? 
                 (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
                 <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
                 }
               </View>
             </TouchableOpacity>
-
-
           </View>
         </View>
       </Modal>
@@ -141,7 +160,7 @@ const SettingsPage = () => {
         <View style={styles.rowSettings}>
           <View style={styles.IconTextLeft}>
             <MaterialCommunityIcons name="timer-sand" size={24} color="black" />
-            <Text>Time</Text>
+            <Text style={text.settings_text}>Time</Text>
           </View> 
           <View style={styles.IconTextLeft}>
             <Pressable onPress={()=> setCount((count>1 ? count-1 : 1))}>
@@ -159,7 +178,10 @@ const SettingsPage = () => {
 
         {descriptionVisible && (
           <View style={styles.description}>
-            <Text>ajdjsjdlka</Text>
+            <Text style={text.settings_text}>Give your pet a treat!</Text>
+            <Text style={text.settings_text}>Maximum number of times per day where food can be automatically dispensed via camera detection when the surrounding is well-lit.</Text>
+            <Text style={text.settings_text}>(+) - Increase the number of times per day.</Text>
+            <Text style={text.settings_text}>(-) - Decrease the number of times per day.</Text>
           </View>
         )}
         
@@ -167,10 +189,116 @@ const SettingsPage = () => {
           <View style={styles.rowSettings}>
             <View style={styles.IconTextLeft}>
               <MaterialCommunityIcons name="logout" size={24} color="red" />
-              <Text>Logout</Text>
+              <Text style={text.settings_text}>Logout</Text>
             </View> 
           </View>            
         </Pressable>
+
+      </View>
+
+      <View style={styles.settings}>
+        <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Extra Settings</Text>
+        
+        <Pressable onPress={() => setSliderVisible(true)}>
+          <View style={styles.rowSettings}>
+            <View style={styles.IconTextLeft}>
+              <MaterialCommunityIcons name="format-size" size={24} color="black" />
+              <Text style={text.settings_text}>Text Size</Text>
+            </View>
+            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+          </View>
+        </Pressable>
+        
+        <Modal
+        animationType="fade"
+        transparent={true}
+        visible={sliderVisible}
+        onRequestClose={() => setSliderVisible(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.popUp}>
+
+              <View style={styles.popUpOption}>
+                <Text style={[text.settings_title, {fontWeight:'bold'}]}>Text Size</Text>
+                <Pressable onPress={() => setSliderVisible(false)}>
+                  <Entypo name="cross" size={24} color="red" />
+                </Pressable>              
+              </View>
+
+              <View style={styles.popUpOption}>
+                <Text style={{fontSize: tempTextSize}}>Preview Text: {tempTextSize}</Text>
+              </View>
+
+              <View style={styles.popUpOption}>
+                <Slider 
+                style={styles.slider}
+                minimumValue={10}
+                maximumValue={28}
+                step={1}
+                value={textSize}
+                onValueChange={value => setTempTextSize(value)}
+                ></Slider>
+              </View>
+
+              <View style={styles.rowSettings}>
+                <Pressable onPress={() => setSliderVisible(false)}>
+                  <View style={styles.popUpOption}>
+                    <Text style={text.settings_text}>Cancel</Text>
+                  </View>              
+                </Pressable>
+                
+                <Pressable onPress={() => {setSliderVisible(false); setTextSize(tempTextSize)}}>
+                  <View style={styles.popUpOption}>
+                    <Text style={text.settings_text}>Save</Text>
+                  </View>
+                </Pressable>
+              </View>
+
+            </View>
+          </View>
+        </Modal>
+
+        <Pressable onPress={ () => setColorVisible(true) }>
+          <View style={styles.rowSettings}>
+            <View style={styles.IconTextLeft}>
+              <MaterialIcons name="colorize" size={24} color="black" />
+              <Text style={text.settings_text}>Color Palette</Text>
+            </View>
+            <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+          </View>
+        </Pressable>
+
+        <Modal
+        visible={colorVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setColorVisible(false)}
+        >
+          <View style={styles.modalBackground}>
+            <View style={styles.popUp}>
+            
+              <View style={styles.popUpOption}>
+                <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Color Palatte</Text>
+                <Pressable onPress={() => setColorVisible(false)}>
+                  <Entypo name="cross" size={24} color="red" />
+                </Pressable>              
+              </View>
+              
+              {options.map((options) => (
+                <Pressable key={options.value} onPress={() => setColorMode(options.value)}>
+                  <View style={styles.popUpOption}>
+                    <Text style={[text.settings_text, {width: '90%'}]}>{options.label}</Text>
+                    { colorMode == options.value ? 
+                    (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
+                    <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
+                    }
+                  </View>
+                </Pressable>
+              ))}
+
+            </View>
+          </View>
+        </Modal>
 
       </View>
     </SafeAreaView>
@@ -209,11 +337,6 @@ const styles = StyleSheet.create({
   userInfo: {
 
     paddingInline: 10,
-  },
-
-  username: {
-
-    fontSize: 24,
   },
 
   email:{
@@ -268,7 +391,7 @@ const styles = StyleSheet.create({
 
   popUp: {
   
-    width: 250,
+    width: '80%',
     padding: 20,
     backgroundColor: '#fff',
     borderRadius: 15,
@@ -279,7 +402,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     flexDirection: 'row',
-    padding: 5,
+    padding: 10,
   },
 
   description: {
@@ -288,6 +411,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     padding: 5,
     borderRadius: 15,
+    gap: 10
+  },
+
+  slider: {
+
+    width: '100%',
+    height: 40,
+  }
+})
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
   },
 })
+
 export default SettingsPage

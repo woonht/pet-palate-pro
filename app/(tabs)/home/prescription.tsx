@@ -6,6 +6,7 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
+import { useTextSize } from "@/app/text_size_context"
 
 const Prescription = () => {
 
@@ -18,6 +19,8 @@ const Prescription = () => {
   })
   const [prescription, setPrescription] = useState<PrescriptionType[]>([])
   const { user } = useAuth()
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
   
   type PrescriptionType = {
     userID: string;
@@ -184,15 +187,15 @@ const Prescription = () => {
       {prescription.map((item) => (
         <View key={item.timeID} style={styles.record}>
           <View style={styles.recordTitleIconLeft}>
-            <MaterialCommunityIcons name="pill" size={40} color="black" />
-            <Text style={styles.recordTitle}>{item.vaccine}</Text>
+            <MaterialCommunityIcons name="pill" size={30} color="black" />
+            <Text style={[styles.recordTitle, text.settings_title]}>{item.vaccine}</Text>
           </View>
-          {item.description ? <Text style={{color:'rgba(0,0,0,0.7)'}}>{item.description}</Text> : null}
-          <Text>{item.vet}</Text>
-          <Text>Expires: {item.date}</Text>
+          {item.description ? <Text style={[text.settings_text, {color:'rgba(0,0,0,0.7)'}]}>{item.description}</Text> : null}
+          <Text style={text.settings_text}>{item.vet}</Text>
+          <Text style={text.settings_text}>Expires: {item.date}</Text>
 
           <Pressable onPress={() => deleteInDatabase(item.timeID)} style={styles.remove}>
-            <Text style={{color:'red', fontSize: 20}}>Remove</Text>
+            <Text style={[text.settings_title, {color:'red'}]}>Remove</Text>
           </Pressable>
         </View>
       ))}
@@ -215,13 +218,13 @@ const Prescription = () => {
         <View style={styles.modalBackground}>
           <View style={styles.popUp}> 
             <View style={styles.popUpTitle}>
-              <Text style={styles.popUpTitleText}>Prescription</Text>
+              <Text style={[styles.popUpTitleText, text.settings_title]}>Prescription</Text>
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Pills</Text>
+              <Text style={text.settings_text}>Pills</Text>
               <TextInput
-              style={styles.popUpInput}
+              style={[styles.popUpInput]}
               placeholder="Vaccine"
               value={popUpInput.vaccine}
               onChangeText={(text) => handleChange('vaccine', text)}
@@ -229,7 +232,7 @@ const Prescription = () => {
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Vet</Text>
+              <Text style={text.settings_text}>Vet</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="Vet"
@@ -239,7 +242,7 @@ const Prescription = () => {
 
             </View>
             <View style={styles.popUpContainer}>
-              <Text>Expires</Text>
+              <Text style={text.settings_text}>Expires</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="1-1-2020"
@@ -249,7 +252,7 @@ const Prescription = () => {
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Description</Text>
+              <Text style={text.settings_text}>Description</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="Description"
@@ -263,10 +266,10 @@ const Prescription = () => {
                                           setInput({ vaccine: '', vet: '', date: '', description: '' })
                                           } 
                                   }>
-                <Text>Cancel</Text>
+                <Text style={text.settings_text}>Cancel</Text>
               </Pressable>
               <Pressable onPress={ () => saveToDatabase()}>
-                <Text>Save</Text>
+                <Text style={text.settings_text}>Save</Text>
               </Pressable>
             </View>
           </View>
@@ -331,7 +334,6 @@ const styles = StyleSheet.create({
   popUpTitleText:{
 
     fontWeight: 'bold',
-    fontSize: 20,
   },
 
   popUpInput: {
@@ -371,7 +373,6 @@ const styles = StyleSheet.create({
   recordTitle: {
 
     fontWeight: 'bold',
-    fontSize: 32,
   },
 
   remove: {
@@ -379,4 +380,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
 })
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
+})
+
 export default Prescription

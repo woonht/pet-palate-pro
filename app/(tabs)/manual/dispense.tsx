@@ -1,11 +1,15 @@
-import { AntDesign, MaterialIcons } from "@expo/vector-icons";
-import { PlatformPressable } from "@react-navigation/elements";
-import { router } from "expo-router";
-import React from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { AntDesign, MaterialIcons } from "@expo/vector-icons"
+import { PlatformPressable } from "@react-navigation/elements"
+import { router } from "expo-router"
+import React from "react"
+import { Alert, StyleSheet, Text, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { useTextSize } from "@/app/text_size_context"
 
 const FoodDispense = () => {
+
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
 
   const sendDispenseCommand = async () => {
     try{
@@ -33,7 +37,7 @@ const FoodDispense = () => {
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') } style={styles.container}>
         <View style={styles.IconTextLeft}>
-          <Text>Dispense Logs</Text>
+          <Text style={text.settings_title}>Dispense Logs</Text>
           <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
         </View>
       </PlatformPressable>
@@ -83,4 +87,17 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   }
 })
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
+})
+
 export default FoodDispense

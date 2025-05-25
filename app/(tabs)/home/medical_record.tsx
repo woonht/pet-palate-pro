@@ -1,4 +1,4 @@
-import { AntDesign, MaterialCommunityIcons } from "@expo/vector-icons"
+import { AntDesign, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { PlatformPressable } from "@react-navigation/elements"
 import React, { useCallback, useEffect, useState } from "react"
@@ -6,6 +6,7 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
+import { useTextSize } from "@/app/text_size_context"
 
 const Medical = () => {
 
@@ -18,6 +19,8 @@ const Medical = () => {
   })
   const [medicalRecord, setMedicalRecord] = useState<MedicalRecordType[]>([])
   const { user } = useAuth()
+  const { textSize } = useTextSize()
+  const text = dynamicStyles(textSize)
 
   type MedicalRecordType = {
     userID: string;
@@ -185,15 +188,15 @@ const Medical = () => {
       {medicalRecord.map((item) => (
         <View key={item.timeID} style={styles.record}>
           <View style={styles.recordTitleIconLeft}>
-            <MaterialCommunityIcons name="pill" size={40} color="black" />
-            <Text style={styles.recordTitle}>{item.medical_record}</Text>
+            <FontAwesome5 name="book-medical" size={30} color="black" />
+            <Text style={[styles.recordTitle, text.settings_title]}>{item.medical_record}</Text>
           </View>
-          {item.description ? <Text style={{color:'rgba(0,0,0,0.7)'}}>{item.description}</Text> : null}
-          <Text>{item.vet}</Text>
-          <Text>Expires: {item.date}</Text>
+          {item.description ? <Text style={[text.settings_text, {color:'rgba(0,0,0,0.7)'}]}>{item.description}</Text> : null}
+          <Text style={text.settings_text}>{item.vet}</Text>
+          <Text style={text.settings_text}>Expires: {item.date}</Text>
 
           <Pressable onPress={() => deleteInDatabase(item.timeID)} style={styles.remove}>
-            <Text style={{color:'red', fontSize: 20}}>Remove</Text>
+            <Text style={[text.settings_title, {color:'red'}]}>Remove</Text>
           </Pressable>
         </View>
       ))}
@@ -216,11 +219,11 @@ const Medical = () => {
         <View style={styles.modalBackground}>
           <View style={styles.popUp}> 
             <View style={styles.popUpTitle}>
-              <Text style={styles.popUpTitleText}>Medical</Text>
+              <Text style={[styles.popUpTitleText, text.settings_title]}>Medical</Text>
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Medical Record</Text>
+              <Text style={text.settings_text}>Medical Record</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="Medical record"
@@ -230,7 +233,7 @@ const Medical = () => {
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Vet</Text>
+              <Text style={text.settings_title}>Vet</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="Vet"
@@ -240,7 +243,7 @@ const Medical = () => {
 
             </View>
             <View style={styles.popUpContainer}>
-              <Text>Date</Text>
+              <Text style={text.settings_title}>Date</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="1-1-2020"
@@ -250,7 +253,7 @@ const Medical = () => {
             </View>
 
             <View style={styles.popUpContainer}>
-              <Text>Description</Text>
+              <Text style={text.settings_title}>Description</Text>
               <TextInput
               style={styles.popUpInput}
               placeholder="Description"
@@ -264,10 +267,10 @@ const Medical = () => {
                                           setInput({ medical_record: '', vet: '', date: '', description: '' })
                                           } 
                                   }>
-                <Text>Cancel</Text>
+                <Text style={text.settings_title}>Cancel</Text>
               </Pressable>
               <Pressable onPress={ () => saveToDatabase()}>
-                <Text>Save</Text>
+                <Text style={text.settings_title}>Save</Text>
               </Pressable>
             </View>
           </View>
@@ -332,7 +335,6 @@ const styles = StyleSheet.create({
   popUpTitleText:{
 
     fontWeight: 'bold',
-    fontSize: 20,
   },
 
   popUpInput: {
@@ -367,12 +369,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    
   },
 
   recordTitle: {
 
     fontWeight: 'bold',
-    fontSize: 32,
   },
 
   remove: {
@@ -380,4 +382,17 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
 })
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
+})
+
 export default Medical
