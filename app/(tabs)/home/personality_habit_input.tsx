@@ -5,6 +5,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useTextSize } from "@/app/text_size_context"
+import CustomLoader from "@/components/Custom_Loader"
 
 const UserInput = () => {
   const [input, setInput] = useState({
@@ -16,6 +17,7 @@ const UserInput = () => {
   const { user } = useAuth()
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
+  const [loading, setLoading] = useState(true)
 
   const handleChange = (key:string, value:string) => {
       setInput(prev => ({ ...prev, [key]: value }))
@@ -32,20 +34,17 @@ const UserInput = () => {
     }
   }
 
-  useEffect( () => {
-    const loadPetPersonalityHabit = async () => {
-      try{
-        const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
-        if(storedPersonalityHabit)
-          setInput(JSON.parse(storedPersonalityHabit))
-        console.log('Data load successfully')
-      }
-      catch(e){
-        console.log('Loading Error: ', e)
-      }
+  const loadPetPersonalityHabit = async () => {
+    try{
+      const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
+      if(storedPersonalityHabit)
+        setInput(JSON.parse(storedPersonalityHabit))
+      console.log('Data load successfully')
     }
-    loadPetPersonalityHabit()
-  },[])
+    catch(e){
+      console.log('Loading Error: ', e)
+    }
+  }
 
   const savePetPersonalityHabitToDatabase = async () => {
     const dataToSend = {
@@ -83,6 +82,7 @@ const UserInput = () => {
       }
 
       try {
+        await loadPetPersonalityHabit()
         const formType = 'personality_habit'
         const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}`, {
           method: "GET",
@@ -112,6 +112,7 @@ const UserInput = () => {
             dislike: result.dislike || '',
           })
           console.log("Pet personality and habit loaded:", result)
+          setLoading(false)
         }
     
       } catch (e) {
@@ -125,6 +126,10 @@ const UserInput = () => {
     Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 
       [{text: 'No', style: "cancel"}, 
         {text: 'Clear', style: "destructive", onPress: () => setInput({ temperament:'', skills:'', like:'', dislike:''} )}] )
+  }
+
+  if(loading){
+    return <CustomLoader/>
   }
 
   return(

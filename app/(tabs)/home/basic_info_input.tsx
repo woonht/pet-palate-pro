@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from "@/app/auth_context"
 import { useTextSize } from "@/app/text_size_context";
+import CustomLoader from "@/components/Custom_Loader";
 
 const UserInput = () => {
 
@@ -19,21 +20,19 @@ const UserInput = () => {
   const { user } = useAuth()  
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
+  const [loading, setLoading] = useState(true)
 
-  useEffect( () => {
-    const loadPetInfoFromStorage = async () => {
-      try{
-        const storedInfo = await AsyncStorage.getItem('pet_info')
-        if(storedInfo)
-          setInput(JSON.parse(storedInfo))
-        console.log('Data load successfully')
-      }
-      catch(e){
-        console.log('Loading Error: ', e)
-      }
+  const loadPetInfoFromStorage = async () => {
+    try{
+      const storedInfo = await AsyncStorage.getItem('pet_info')
+      if(storedInfo)
+        setInput(JSON.parse(storedInfo))
+      console.log('Data load successfully')
     }
-    loadPetInfoFromStorage()
-  },[])
+    catch(e){
+      console.log('Loading Error: ', e)
+    }
+  }
       
   const savePetInfoToStorage = async () => {
     try {
@@ -86,6 +85,7 @@ const UserInput = () => {
       }
 
       try {
+        await loadPetInfoFromStorage()
         const formType = 'basic_info'
         const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
           method: "GET",
@@ -117,6 +117,7 @@ const UserInput = () => {
             weight: result.weight || '',
           })
           console.log("Pet info loaded:", result)
+          setLoading(false)
         }
     
       } catch (e) {
@@ -130,6 +131,10 @@ const UserInput = () => {
     Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 
       [{text: 'No', style: "cancel"}, 
         {text: 'Clear', style: "destructive", onPress: () => setInput({ name:'', birthdate:'', species:'', breed:'' ,sex:'', weight:''} )}] )
+  }
+
+  if(loading){
+    return <CustomLoader/>
   }
 
   return(

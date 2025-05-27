@@ -6,12 +6,14 @@ import 'expo-dev-client'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { useAuth } from "@/app/auth_context"
 import Toast from 'react-native-toast-message'
+import CustomLoader from "@/components/Custom_Loader"
 
 const SignIn = () => {
 
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const { setUser } = useAuth()
+    const [loading, setLoading] = useState(false)
 
     useFocusEffect(
         useCallback(() => {
@@ -33,56 +35,70 @@ const SignIn = () => {
         
         if(!username || !password){
             Alert.alert('Please enter a valid email or password.')
+            return
         }
-        else{
-            try{
-                const formType = 'user_data'
-                const response = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${username}&formType=${formType}`, {
-                    method: 'GET',
-                    headers: {'Content-Type' : 'application/json'}
+
+        setLoading(true)
+
+        try{
+            const formType = 'user_data'
+            const response = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${username}&formType=${formType}`, {
+                method: 'GET',
+                headers: {'Content-Type' : 'application/json'}
+            })
+
+            const text = await response.text()
+            const result = JSON.parse(text)
+            console.log(result)
+
+            if(username === result.user.name && password === result.user.password){
+                setUser({
+                    userID: result.user.userID,
+                    name: result.user.name,
+                    email: result.user.email,
+                    photo: '',
+                    provider: 'local',
                 })
-                const text = await response.text()
-                const result = JSON.parse(text)
-                console.log(result)
-
-                if(username === result.user.name && password === result.user.password){
-                    setUser({
-                        userID: result.user.userID,
-                        name: result.user.name,
-                        email: result.user.email,
-                        photo: '',
-                        provider: 'local',
-                    })
-
-                    router.push('/(tabs)/home/pet_profile')
-                    Toast.show({
-                        type: 'success',
-                        text1: 'Signed in successfully',
-                    })
-                }
-                else{
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Invalid username or password',
-                    })  
-                }
+                router.push('/(tabs)/home/pet_profile')
+                Toast.show({
+                    type: 'success',
+                    text1: 'Signed in successfully',
+                })
             }
-            catch(e){
+            else{
                 Toast.show({
                     type: 'error',
-                    text1: 'Login failed. Please sign up',
-                });
+                    text1: 'Invalid username or password',
+                })  
             }
+        }
+        catch(e){
+            Toast.show({
+                type: 'error',
+                text1: 'Login failed. Please sign up',
+            });
+        }
+        finally{
+            setLoading(false)
         }
     }
 
     const signUp = () => {
-
-        router.push('/(tabs)/auth/sign_up')
+        try{
+            setLoading(true)
+            router.push('/(tabs)/auth/sign_up')
+        }
+        catch(e){
+            console.error(e)
+        }
+        finally{
+            setLoading(false)
+        }
     }
 
     const signInWithGoogle = async () => {
         try {
+            setLoading(true)
             await GoogleSignin.hasPlayServices()
             const result = await GoogleSignin.signIn()
 
@@ -95,6 +111,9 @@ const SignIn = () => {
                     provider: 'google' as const,
                 }
                 setUser(googleUser); // save user globally
+            }
+            else{
+                setLoading(false)
             }
             
             if (result && result.data?.user) {
@@ -134,6 +153,13 @@ const SignIn = () => {
         catch (e) {
             console.error('Google sign in failed: ' ,e);
         }
+        finally{
+            setLoading(false)
+        }
+    }
+
+    if(loading){
+        return <CustomLoader/>
     }
 
     return(

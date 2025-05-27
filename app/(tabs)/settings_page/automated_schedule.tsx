@@ -8,6 +8,7 @@ import Swipeable, { SwipeableMethods } from "react-native-gesture-handler/Reanim
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
+import CustomLoader from "@/components/Custom_Loader"
 
 const AutomatedSchedule = () => {
   const [time, setTime] = useState(new Date())
@@ -15,6 +16,7 @@ const AutomatedSchedule = () => {
   const [isToggle, setIsToggle] = useState<boolean[]>([])
   const [timelist, setTimeList] = useState<ScheduleType[]>([])
   const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
   
   type ScheduleType = {
     userID: string;
@@ -124,6 +126,7 @@ const AutomatedSchedule = () => {
           const text = await response.text()
           const result = JSON.parse(text)
           console.log('Time list load successfully from database.', result)
+          setLoading(false)
         }
         catch(e){
           console.error('Loading error: ', e)
@@ -208,6 +211,10 @@ const AutomatedSchedule = () => {
       <Text style={styles.removeText}>Remove</Text>
     </Pressable>
   )
+
+  if(loading){
+    return <CustomLoader/>
+  }
 
   return (
     <SafeAreaView edges={["top", "bottom"]} style={styles.whole_page}>

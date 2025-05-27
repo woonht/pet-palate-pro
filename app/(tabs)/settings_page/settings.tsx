@@ -29,6 +29,7 @@ const SettingsPage = () => {
   const text = dynamicStyles(textSize)
   const { colorMode, changeColorMode } = useColorMode()
   const theme = getThemeColors(colorMode)
+  const [loading, setLoading] = useState(false)
 
   const options = [
     { label: 'Normal', value: 'normal' },
@@ -45,6 +46,7 @@ const SettingsPage = () => {
 
   const logout = async () => {
     try {
+      setLoading(true)
       await GoogleSignin.signOut() // Sign out from Google
       setUser(null);               // Clear user context
       router.replace('/(tabs)/auth/sign_in') // Navigate to sign in screen      
@@ -55,6 +57,9 @@ const SettingsPage = () => {
     } 
     catch (error) {
       console.error('Error during logout:', error)
+    }
+    finally{
+      setLoading(false)
     }
   }
 

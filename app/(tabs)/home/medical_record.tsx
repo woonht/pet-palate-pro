@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
 import { useTextSize } from "@/app/text_size_context"
+import CustomLoader from "@/components/Custom_Loader"
 
 const Medical = () => {
 
@@ -21,6 +22,7 @@ const Medical = () => {
   const { user } = useAuth()
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
+  const [loading, setLoading] = useState(true)
 
   type MedicalRecordType = {
     userID: string;
@@ -138,11 +140,15 @@ const Medical = () => {
           if (result && Array.isArray(result)) {
             setMedicalRecord(result)
             await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
-          } else if (result && typeof result === "object") {
+            setLoading(false)
+          } 
+          else if (result && typeof result === "object") {
             const prescriptionsArray = [result]
             setMedicalRecord(prescriptionsArray)
             await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
-          } else {
+            setLoading(false)
+          } 
+          else {
             throw new Error('Invalid response format')
           }
         } 
@@ -179,6 +185,10 @@ const Medical = () => {
     catch(e){
       console.error('Deleting error: ', e)
     }
+  }
+
+  if(loading){
+    return <CustomLoader/>
   }
 
   return(

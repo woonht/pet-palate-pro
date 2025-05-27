@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { useAuth } from "@/app/auth_context"
-
+import CustomLoader from "@/components/Custom_Loader"
 
 const SignUp = () => {
 
@@ -14,6 +14,7 @@ const SignUp = () => {
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const { setUser } = useAuth()
+    const [loading, setLoading] = useState(false)
 
     useFocusEffect(
         useCallback( () => {
@@ -23,71 +24,73 @@ const SignUp = () => {
     const signUp = async () => {
 
         if (name == '' || email == '' || password == '' || confirm == ''){
-
             Alert.alert('Error', 'Please fill up the required fill.')
+            return
         }
-        else if (password == confirm){
-            
-            const uniqueID = `${Date.now()}_${Math.floor(Math.random() * 100000)}`
-            const userData = {
+        if (password !== confirm){
+            Alert.alert('Error' ,'Password do not match.')
+        }    
+        
+        setLoading(true)
+        const uniqueID = `${Date.now()}_${Math.floor(Math.random() * 100000)}`
+        const userData = {
+            userID: uniqueID,
+            name,
+            email,
+            password,
+            formType: 'user_data',
+            provider: 'local'
+        }
+
+        try{
+            const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(userData)
+            })
+
+            if (response.status === 409) {
+                // Conflict - username/email exists
+                const errorData = await response.json()
+                Alert.alert('Error', errorData.error)
+                emptySignInFill()
+                return
+            }
+
+            if (!response.ok) {
+                // Handle other errors
+                const errorData = await response.json()
+                Alert.alert('Error', errorData.error)
+                emptySignInFill()
+                return
+            }
+
+            setUser({
                 userID: uniqueID,
                 name,
                 email,
-                password,
-                formType: 'user_data',
+                photo: '',
                 provider: 'local'
-            }
+            })
+        
+            Toast.show({
+                type: 'success',
+                text1: 'Signed up successfully',
+            })
 
-            try{
-                const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(userData)
-                })
-
-                if (response.status === 409) {
-                    // Conflict - username/email exists
-                    const errorData = await response.json()
-                    Alert.alert('Error', errorData.error)
-                    emptySignInFill()
-                    return
-                }
-
-                if (!response.ok) {
-                    // Handle other errors
-                    const errorData = await response.json()
-                    Alert.alert('Error', errorData.error)
-                    emptySignInFill()
-                    return
-                }
-
-                setUser({
-                    userID: uniqueID,
-                    name,
-                    email,
-                    photo: '',
-                    provider: 'local'
-                })
-            
-                Toast.show({
-                    type: 'success',
-                    text1: 'Signed up successfully',
-                })
-
-                const result = await response.json()
-                console.log('Saved: ', result)
-                console.log('User data saved successfully to database')
-                router.replace('/(tabs)/auth/sign_in')
-            }
-            catch(e){
-                console.error('Saving error: ', e)
-            }
+            const result = await response.json()
+            console.log('Saved: ', result)
+            console.log('User data saved successfully to database')
+            router.replace('/(tabs)/auth/sign_in')
         }
-        else{
-
-            Alert.alert('Error' ,'Password do not match.')
+        catch(e){
+            console.error('Saving error: ', e)
+        }
+        finally{
+            setLoading(false)
         }
     }
+    
 
     const toLogin = () => {
 
@@ -96,6 +99,7 @@ const SignUp = () => {
 
     const signInWithGoogle = async () => {
         try {
+            setLoading(true)
             await GoogleSignin.hasPlayServices()
             const result = await GoogleSignin.signIn()
 
@@ -108,6 +112,9 @@ const SignUp = () => {
                     provider: 'google' as const,
                 }
                 setUser(googleUser); // save user globally
+            }
+            else{
+                setLoading(false)
             }
             
             if (result && result.data?.user) {
@@ -142,10 +149,14 @@ const SignUp = () => {
                 catch(e){
                     console.error('Google sign in data failed to save to database: ', e)
                 }
+                finally{
+                    setLoading(false)
+                }
             }
         } 
         catch (e) {
-            console.error('Google sign in failed: ' ,e);
+            console.error('Google sign in failed: ' ,e)
+            setLoading(false)
         }
     }
 
@@ -155,6 +166,11 @@ const SignUp = () => {
         setPassword('')
         setConfirm('')
     }    
+
+    if(loading){
+        console.log(loading)
+        return <CustomLoader/>
+    }
 
     return(
         <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>

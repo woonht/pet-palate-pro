@@ -7,6 +7,7 @@ import { Pressable, StyleSheet, Text, View, Image, Platform, Alert, Modal, Image
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useTextSize } from "@/app/text_size_context"
+import CustomLoader from "@/components/Custom_Loader"
 
 const Profile = () => {
 
@@ -25,6 +26,7 @@ const Profile = () => {
     const { user } = useAuth()  
     const { textSize } = useTextSize()
     const text = dynamicStyles(textSize)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         (async () => {
@@ -121,53 +123,58 @@ const Profile = () => {
 
     useEffect( () => {
         const loadPetInfoFromDatabase = async () => {  
-        if (!user || !user.userID) {
-            console.warn('User not available yet.');
-            return;
-        }
-        else{
-            console.log(user)
-        }
+            if (!user || !user.userID) {
+                console.warn('User not available yet.');
+                return;
+            }
+            else{
+                console.log(user)
+            }
 
-        try {
-            const formType = 'basic_info'
-            const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
-            method: "GET",
-            headers: { "Content-Type" : "application/json" },
-            })
+            try {
+                const formType = 'basic_info'
+                const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
+                method: "GET",
+                headers: { "Content-Type" : "application/json" },
+                })
+            
+                const text = await response.text() // Read raw response
+                console.log("Raw response text:", text) // Debug what was returned
+            
+                if (!text) {
+                console.warn("Empty response received from backend.")
+                return
+                }
+            
+                const result = JSON.parse(text) // Only parse if not empty
         
-            const text = await response.text() // Read raw response
-            console.log("Raw response text:", text) // Debug what was returned
-        
-            if (!text) {
-            console.warn("Empty response received from backend.")
-            return
+                if (result.error) {
+                console.warn("Server responded with error:", result.error)
+                return
+                }
+            
+                if (result && typeof result === "object") {
+                setBasicInfo({
+                    name: result.name || '',
+                    birthdate: result.birthdate || '',
+                    species: result.species || '',
+                    sex: result.sex || '',
+                    weight: result.weight || '',
+                })
+                console.log("Pet info loaded:", result)
+                setLoading(false)
+                }
+            
+            } catch (e) {
+                console.error("Error loading pet info from database:", e)
             }
-        
-            const result = JSON.parse(text) // Only parse if not empty
-    
-            if (result.error) {
-            console.warn("Server responded with error:", result.error)
-            return
-            }
-        
-            if (result && typeof result === "object") {
-            setBasicInfo({
-                name: result.name || '',
-                birthdate: result.birthdate || '',
-                species: result.species || '',
-                sex: result.sex || '',
-                weight: result.weight || '',
-            })
-            console.log("Pet info loaded:", result)
-            }
-        
-        } catch (e) {
-            console.error("Error loading pet info from database:", e)
-        }
         }
         loadPetInfoFromDatabase()
     },[user]) // <-- re-run when user changes
+
+    if(loading){
+        return <CustomLoader/>
+    }
 
     return(
         <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>

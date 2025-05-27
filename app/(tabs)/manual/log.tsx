@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react"
-import { ActivityIndicator, Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Image, ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
+import CustomLoader from "@/components/Custom_Loader"
 
 const Logs = () => {
 
@@ -81,14 +82,14 @@ const Logs = () => {
 
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
-      <View style={styles.container}> 
         {loading ? (
-            <ActivityIndicator size='large' color="#FF8C00"/>
-        ) :  (
+          <CustomLoader message="Loading Logs..."/>
+            ) :  (
           <ScrollView>
+            <View style={styles.container}>
             {log.photo.map((photoUrl, index) => (
               <View style={styles.photo_container} key={index}>
-                <View style={styles.text}>
+                <View>
                   <Text style={{fontWeight:'bold', fontSize: 20, paddingBottom: 5}}>Log {index+1}</Text>
                   <Text>{formatTimestamp(log.time[index])}</Text>
                 </View>
@@ -101,14 +102,14 @@ const Logs = () => {
                       source={{ uri: photoUrl }}
                       style={styles.image}
                       resizeMode="cover"
-                    />
+                      />
                   </Pressable>
                 </View>
               </View>
             ))}
+            </View>
           </ScrollView>
         )}
-      </View>
 
       <Modal
           visible= {pictureVisible}
@@ -127,7 +128,6 @@ const Logs = () => {
             </View>
         </ImageBackground>
       </Modal>
-      
     </SafeAreaView>
   )
 }
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
 
     flex: 1,
     backgroundColor: '#FFF7ED',
-    alignItems:'center',
     paddingTop: 20,
   },
 
@@ -167,10 +166,6 @@ const styles = StyleSheet.create({
     height: 90,
     borderRadius: 15,
   },
-
-  text: {
-
-  },  
 
   vertical_line: {
 
@@ -208,6 +203,20 @@ const styles = StyleSheet.create({
     paddingLeft: 15,
     paddingRight: 15,
     borderRadius: 50,
+  },
+
+  loaderContainer: {
+    
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  loaderText: {
+    
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
   },
 })
 export default Logs

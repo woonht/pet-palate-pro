@@ -21,6 +21,7 @@ const Prescription = () => {
   const { user } = useAuth()
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
+  const [loading, setLoading] = useState(true)
   
   type PrescriptionType = {
     userID: string;
@@ -138,11 +139,15 @@ const Prescription = () => {
           if (result && Array.isArray(result)) {
             setPrescription(result)
             await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(result))
-          } else if (result && typeof result === "object") {
+            setLoading(false)
+          } 
+          else if (result && typeof result === "object") {
             const prescriptionsArray = [result]
             setPrescription(prescriptionsArray)
             await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(prescriptionsArray))
-          } else {
+            setLoading(false)
+          } 
+          else {
             throw new Error('Invalid response format')
           }
         } 
