@@ -37,7 +37,7 @@ const FoodDispense = () => {
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <PlatformPressable onPress={ () => router.push('/(tabs)/manual/log') } style={styles.container}>
         <View style={styles.IconTextLeft}>
-          <Text style={text.settings_title}>Dispense Logs</Text>
+          <Text style={text.settings_text}>Dispense Logs</Text>
           <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
         </View>
       </PlatformPressable>

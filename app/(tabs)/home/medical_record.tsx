@@ -1,4 +1,4 @@
-import { AntDesign, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons"
+import { AntDesign, FontAwesome5 } from "@expo/vector-icons"
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { PlatformPressable } from "@react-navigation/elements"
 import React, { useCallback, useEffect, useState } from "react"
