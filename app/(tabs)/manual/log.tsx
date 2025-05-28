@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
 import { useFocusEffect } from "expo-router"
 import CustomLoader from "@/components/Custom_Loader"
+import { useTextSize } from "@/app/text_size_context"
 
 const Logs = () => {
 
@@ -15,6 +16,8 @@ const Logs = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+  const {textSize, setTextSize} = useTextSize()
+  const text = dynamicStyles(textSize)
 
   type LogType = {
     photo: string[],
@@ -90,8 +93,8 @@ const Logs = () => {
             {log.photo.map((photoUrl, index) => (
               <View style={styles.photo_container} key={index}>
                 <View>
-                  <Text style={{fontWeight:'bold', fontSize: 20, paddingBottom: 5}}>Log {index+1}</Text>
-                  <Text>{formatTimestamp(log.time[index])}</Text>
+                  <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Log {index+1}</Text>
+                  <Text style={text.settings_text}>{formatTimestamp(log.time[index])}</Text>
                 </View>
                 <View style={styles.vertical_line}>
                   <Pressable onPress={() => {
@@ -219,4 +222,17 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 })
+
+const dynamicStyles = (textSize:number) => ({
+  settings_text: {
+
+    fontSize: textSize,
+  },
+
+  settings_title: {
+
+    fontSize: textSize*1.2
+  },
+})
+
 export default Logs

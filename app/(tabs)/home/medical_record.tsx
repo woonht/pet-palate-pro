@@ -235,7 +235,7 @@ const Medical = () => {
             <View style={styles.popUpContainer}>
               <Text style={text.settings_text}>Medical Record</Text>
               <TextInput
-              style={styles.popUpInput}
+              style={[styles.popUpInput, text.settings_text]}
               placeholder="Medical record"
               value={popUpInput.medical_record}
               onChangeText={(text) => handleChange('medical_record', text)}
@@ -245,7 +245,7 @@ const Medical = () => {
             <View style={styles.popUpContainer}>
               <Text style={text.settings_title}>Vet</Text>
               <TextInput
-              style={styles.popUpInput}
+              style={[styles.popUpInput, text.settings_text]}
               placeholder="Vet"
               value={popUpInput.vet}
               onChangeText={(text) => handleChange('vet', text)}
@@ -255,7 +255,7 @@ const Medical = () => {
             <View style={styles.popUpContainer}>
               <Text style={text.settings_title}>Date</Text>
               <TextInput
-              style={styles.popUpInput}
+              style={[styles.popUpInput, text.settings_text]}
               placeholder="1-1-2020"
               value={popUpInput.date}
               onChangeText={(text) => handleChange('date', text)}
@@ -265,7 +265,7 @@ const Medical = () => {
             <View style={styles.popUpContainer}>
               <Text style={text.settings_title}>Description</Text>
               <TextInput
-              style={styles.popUpInput}
+              style={[styles.popUpInput, text.settings_text]}
               placeholder="Description"
               value={popUpInput.description}
               onChangeText={(text) => handleChange('description', text)}
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
 
   popUpInput: {
 
-    height: 40,
+    height: 'auto',
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 10,

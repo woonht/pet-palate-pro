@@ -1,7 +1,7 @@
 import { Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons"
 import { router, useFocusEffect } from "expo-router"
 import React, { useCallback, useEffect, useState } from "react"
-import { Image, Modal, ScrollView, StyleSheet, TouchableOpacity } from "react-native"
+import { Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
 import { Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/app/auth_context"
@@ -30,6 +30,8 @@ const SettingsPage = () => {
   const { colorMode, changeColorMode } = useColorMode()
   const theme = getThemeColors(colorMode)
   const [loading, setLoading] = useState(false)
+  const [inputVisible, setInputVisible] = useState(false)
+  const [device, setDevice] = useState('')
 
   const options = [
     { label: 'Normal', value: 'normal' },
@@ -308,6 +310,56 @@ const SettingsPage = () => {
             </View>
           </Modal>
 
+          <Pressable onPress={() => setInputVisible(true)}>
+            <View style={styles.rowSettings}>
+                <View style={styles.IconTextLeft}>
+                  <MaterialIcons name="device-hub" size={24} color="black" />
+                  <Text style={text.settings_text}>Pet Feeder Device</Text>
+                </View>
+                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+            </View>
+          </Pressable>
+
+          <Modal
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setInputVisible(false)}
+          visible={inputVisible}
+          >
+            <View style={styles.modalBackground}> 
+              <View style={styles.popUp}>
+                <View style={styles.popUpOption}>
+                  <Text style={text.settings_text}>Pet Feeder Device</Text>
+                  <Pressable onPress={() => setInputVisible(false)}>
+                    <Entypo name="cross" size={24} color="red" />
+                  </Pressable>   
+                </View>
+
+                <TextInput
+                style={[styles.input, text.settings_text]}
+                placeholder="pet_feeder_1"
+                placeholderTextColor={'grey'}
+                value={device}
+                onChangeText={(text) => setDevice(text)}
+                />
+
+                <View style={styles.rowSettings}>
+                  <Pressable onPress={() => setInputVisible(false)}>
+                    <View style={styles.popUpOption}>
+                      <Text style={text.settings_text}>Cancel</Text>
+                    </View>              
+                  </Pressable>
+                  
+                  <Pressable onPress={() => {setInputVisible(false)}}>
+                    <View style={styles.popUpOption}>
+                      <Text style={text.settings_text}>Save</Text>
+                    </View>
+                  </Pressable>
+                </View>                  
+              </View>
+            </View>
+          </Modal>
+
         </View>
       </ScrollView>
     </SafeAreaView>  
@@ -432,7 +484,17 @@ const styles = StyleSheet.create({
 
     width: '100%',
     height: 40,
-  }
+  },
+
+  input: {
+
+    height: 'auto',
+    borderWidth: 1,
+    borderRadius: 25,
+    paddingHorizontal: 10,
+    marginTop: 15,
+    marginBottom: 15,
+  },
 })
 
 const dynamicStyles = (textSize:number) => ({

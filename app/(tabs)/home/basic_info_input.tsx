@@ -144,7 +144,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Name:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Enter pet's name"
                 placeholderTextColor={'grey'}
                 value={input.name}
@@ -154,7 +154,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Birthdate:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="1-1-2020"
                 placeholderTextColor={'grey'}
                 value={input.birthdate}
@@ -164,7 +164,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Species:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Golden Retriever"
                 placeholderTextColor={'grey'}
                 value={input.species}
@@ -174,7 +174,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Breed:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Dog"
                 placeholderTextColor={'grey'}
                 value={input.breed}
@@ -184,7 +184,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Sex:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Male"
                 placeholderTextColor={'grey'}
                 value={input.sex}
@@ -194,7 +194,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Weight:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="25kg"
                 placeholderTextColor={'grey'}
                 value={input.weight}
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
 
   input: {
 
-    height: 40,
+    height: 'auto',
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 10,

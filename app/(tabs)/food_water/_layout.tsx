@@ -18,7 +18,7 @@ const StackLayout = () => {
                             fontSize: adjustedFontSize
                            }
                         }}>
-        <Stack.Screen name='level' options={{title:'Food and Water Level'}}/>
+        <Stack.Screen name='level' options={{title:'Device Monitoring'}}/>
     </Stack>
   )
 }

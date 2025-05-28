@@ -139,7 +139,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Temperament:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Friendly, Playful"
                 placeholderTextColor={'grey'}
                 value={input.temperament}
@@ -149,7 +149,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Skills:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Hand Shake, Sit, Stand"
                 placeholderTextColor={'grey'}
                 value={input.skills}
@@ -159,7 +159,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Like:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Ball, Park Walking"
                 placeholderTextColor={'grey'}
                 value={input.like}
@@ -169,7 +169,7 @@ const UserInput = () => {
         <View style={styles.container}>
             <Text style={text.settings_text}>Dislike:</Text>
             <TextInput
-                style={styles.input}
+                style={[styles.input, text.settings_text]}
                 placeholder="Thunder, Firework"
                 placeholderTextColor={'grey'}
                 value={input.dislike}
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
 
   input: {
 
-    height: 40,
+    height: 'auto',
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 10,
