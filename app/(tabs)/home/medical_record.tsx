@@ -139,13 +139,13 @@ const Medical = () => {
       
           if (result && Array.isArray(result)) {
             setMedicalRecord(result)
-            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(result))
+            await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(result))
             setLoading(false)
           } 
           else if (result && typeof result === "object") {
             const prescriptionsArray = [result]
             setMedicalRecord(prescriptionsArray)
-            await AsyncStorage.setItem('prescriptionRecord', JSON.stringify(prescriptionsArray))
+            await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(prescriptionsArray))
             setLoading(false)
           } 
           else {

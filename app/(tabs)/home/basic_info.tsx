@@ -32,7 +32,7 @@ const BasicInfo = () => {
 
   const loadPetInfo = async () => {
     try {
-      const storedInfo = await AsyncStorage.getItem('pet_info')
+      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}`)
       if (storedInfo) {
         setBasicInfo(JSON.parse(storedInfo))
         console.log('Data load successfully')
@@ -45,7 +45,7 @@ const BasicInfo = () => {
   
   const loadPetPersonalityHabit = async () => {
     try{
-      const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
+      const storedPersonalityHabit = await AsyncStorage.getItem(`pet_personality_habit_${user?.userID}`)
       if(storedPersonalityHabit)
         setPersonalityHabit(JSON.parse(storedPersonalityHabit))
     }

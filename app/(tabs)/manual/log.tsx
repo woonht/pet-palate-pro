@@ -16,7 +16,7 @@ const Logs = () => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
-  const {textSize, setTextSize} = useTextSize()
+  const {textSize } = useTextSize()
   const text = dynamicStyles(textSize)
 
   type LogType = {

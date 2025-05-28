@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import * as Notifications from 'expo-notifications'
 import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useTextSize } from "@/app/text_size_context"
+import { useAuth } from "@/app/auth_context"
 
   const Notification = () => {
 
@@ -15,6 +16,7 @@ import { useTextSize } from "@/app/text_size_context"
     const [isEnableReminder, setIsEnableReminder] = useState(false)
     const { textSize } = useTextSize()
     const text = dynamicStyles(textSize)
+    const { user } = useAuth()
     
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
@@ -28,11 +30,11 @@ import { useTextSize } from "@/app/text_size_context"
     useEffect( () => {
       const loadNotifcationSettings = async () => {
         try{
-          const enable = await AsyncStorage.getItem('isEnable')
-          const level = await AsyncStorage.getItem('isEnableLevel')
-          const dispense = await AsyncStorage.getItem('isEnableDispense')
-          const hydration = await AsyncStorage.getItem('isEnableHydration')
-          const reminder = await AsyncStorage.getItem('isEnableReminder')
+          const enable = await AsyncStorage.getItem(`isEnable_${user?.userID}`)
+          const level = await AsyncStorage.getItem(`isEnableLevel_${user?.userID}`)
+          const dispense = await AsyncStorage.getItem(`isEnableDispense_${user?.userID}`)
+          const hydration = await AsyncStorage.getItem(`isEnableHydration_${user?.userID}`)
+          const reminder = await AsyncStorage.getItem(`isEnableReminder_${user?.userID}`)
 
           if(enable)
             setIsEnable(JSON.parse(enable))
@@ -75,10 +77,10 @@ import { useTextSize } from "@/app/text_size_context"
         handleReminderNotification(true)
 
         await AsyncStorage.multiSet([
-          ['isEnableLevel', JSON.stringify(true)],
-          ['isEnableDispense', JSON.stringify(true)],
-          ['isEnableHydration', JSON.stringify(true)],
-          ['isEnableReminder', JSON.stringify(true)]
+          [`isEnableLevel_${user?.userID}`, JSON.stringify(true)],
+          [`isEnableDispense_${user?.userID}`, JSON.stringify(true)],
+          [`isEnableHydration_${user?.userID}`, JSON.stringify(true)],
+          [`isEnableReminder_${user?.userID}`, JSON.stringify(true)]
         ])
       }
       else{
@@ -92,35 +94,35 @@ import { useTextSize } from "@/app/text_size_context"
         handleReminderNotification(false)
 
         await AsyncStorage.multiRemove([
-          'isEnableLevel',
-          'isEnableDispense',
-          'isEnableHydration',
-          'isEnableReminder'
+          `isEnableLevel_${user?.userID}`,
+          `isEnableDispense_${user?.userID}`,
+          `isEnableHydration_${user?.userID}`,
+          `isEnableReminder_${user?.userID}`
         ])
       }
     } 
     
     const handleLevelNotification = async (enable:boolean) => {
       setIsEnableLevel(enable)
-      await AsyncStorage.setItem('isEnableLevel', JSON.stringify(enable))
+      await AsyncStorage.setItem(`isEnableLevel_${user?.userID}`, JSON.stringify(enable))
   
     }
 
     const handleDispenseNotification = async (enable:boolean) => {
       setIsEnableDispense(enable)
-      await AsyncStorage.setItem('isEnableDispense', JSON.stringify(enable))
+      await AsyncStorage.setItem(`isEnableDispense_${user?.userID}`, JSON.stringify(enable))
 
     }
 
     const handleHydrationNotification = async (enable:boolean) => {
       setIsEnableHydration(enable)
-      await AsyncStorage.setItem('isEnableHydration', JSON.stringify(enable))
+      await AsyncStorage.setItem(`isEnableHydration_${user?.userID}`, JSON.stringify(enable))
 
     }
 
     const handleReminderNotification = async (enable:boolean) => {
       setIsEnableReminder(enable)
-      await AsyncStorage.setItem('isEnableReminder', JSON.stringify(enable))
+      await AsyncStorage.setItem(`isEnableReminder_${user?.userID}`, JSON.stringify(enable))
 
       if(enable == true) {
         

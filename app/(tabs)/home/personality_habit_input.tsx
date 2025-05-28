@@ -25,7 +25,7 @@ const UserInput = () => {
 
   const savePetPersonalityHabitToStorage = async () => {
     try{
-      await AsyncStorage.setItem('pet_personality_habit', JSON.stringify(input))
+      await AsyncStorage.setItem(`pet_personality_habit_${user?.userID}`, JSON.stringify(input))
       router.back()
       console.log('Data saved to Asyncstorage')
     }
@@ -36,7 +36,7 @@ const UserInput = () => {
 
   const loadPetPersonalityHabit = async () => {
     try{
-      const storedPersonalityHabit = await AsyncStorage.getItem('pet_personality_habit')
+      const storedPersonalityHabit = await AsyncStorage.getItem(`pet_personality_habit_${user?.userID}`)
       if(storedPersonalityHabit)
         setInput(JSON.parse(storedPersonalityHabit))
       console.log('Data load successfully')

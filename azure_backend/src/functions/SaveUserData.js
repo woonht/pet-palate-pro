@@ -33,55 +33,56 @@ app.http('SaveUserData', {
 
             const database = client.database(dbName);
             const container = database.container("UserData");
-
-            const { resources: allUsers } = await container.items.query("SELECT VALUE COUNT(1) FROM c").fetchAll(); // COUNT(1) OR COUNT(*) both count total document
-            const number = allUsers[0] + 1;
             
             const itemToSave = {
                 ...user_data,
                 timeStamp: new Date().toISOString(),
-                device_id: `pet_feeder_${number}`
             };
 
             itemToSave.id = user_data.userID;
 
-            // Query to check for existing username or email
-            const querySpecUsername = {
-                query: "SELECT * FROM c WHERE c.name = @name",
-                parameters: [{ name: "@name", value: itemToSave.name }]
-            };
+            const isNewUser = !user_data.isUpdate && user_data.userID;
 
-            const querySpecEmail = {
-                query: "SELECT * FROM c WHERE c.email = @email",
-                parameters: [{ name: "@email", value: itemToSave.email }]
-            };
+            if(isNewUser){
 
-            const { resources: existingUsernames } = await container.items.query(querySpecUsername).fetchAll();
-            const { resources: existingEmails } = await container.items.query(querySpecEmail).fetchAll();
-
-            // If duplicates exist and this is a new registration (no id), reject with 409
-            // If the query found any matching document
-            // And if the incoming data does not have an id field (which means it’s a new registration, not an update)
-            if (existingUsernames.length > 0 && existingEmails.length > 0){
-                return {
-                    status: 409,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Username and email already exists." })
-                };   
-            }
-            if (existingUsernames.length > 0) {
-                return {
-                    status: 409,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Username already exists." })
+                // Query to check for existing username or email
+                const querySpecUsername = {
+                    query: "SELECT * FROM c WHERE c.name = @name",
+                    parameters: [{ name: "@name", value: itemToSave.name }]
                 };
-            }
-            if (existingEmails.length > 0) {
-                return {
-                    status: 409,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Email already exists." })
+
+                const querySpecEmail = {
+                    query: "SELECT * FROM c WHERE c.email = @email",
+                    parameters: [{ name: "@email", value: itemToSave.email }]
                 };
+                
+                const { resources: existingUsernames } = await container.items.query(querySpecUsername).fetchAll();
+                const { resources: existingEmails } = await container.items.query(querySpecEmail).fetchAll();
+                
+                // If duplicates exist and this is a new registration (no id), reject with 409
+                // If the query found any matching document
+                // And if the incoming data does not have an id field (which means it’s a new registration, not an update)
+                if (existingUsernames.length > 0 && existingEmails.length > 0){
+                    return {
+                        status: 409,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ error: "Username and email already exists." })
+                    };   
+                }
+                if (existingUsernames.length > 0) {
+                    return {
+                        status: 409,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ error: "Username already exists." })
+                    };
+                }
+                if (existingEmails.length > 0) {
+                    return {
+                        status: 409,
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ error: "Email already exists." })
+                    };
+                }
             }
 
             let resource;

@@ -24,19 +24,19 @@ const UserInput = () => {
 
   const loadPetInfoFromStorage = async () => {
     try{
-      const storedInfo = await AsyncStorage.getItem('pet_info')
+      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}`)
       if(storedInfo)
         setInput(JSON.parse(storedInfo))
       console.log('Data load successfully')
     }
     catch(e){
-      console.log('Loading Error: ', e)
+      console.error('Loading Error: ', e)
     }
   }
       
   const savePetInfoToStorage = async () => {
     try {
-      await AsyncStorage.setItem('pet_info', JSON.stringify(input)) // save your object, without await, the code would continue before the fetch is complete, which would cause bugs or empty results.
+      await AsyncStorage.setItem(`pet_info_${user?.userID}`, JSON.stringify(input)) // save your object, without await, the code would continue before the fetch is complete, which would cause bugs or empty results.
       router.back()
       console.log('Data saved to AsyncStorage!') // wait until the data is saved before printing
     } 
@@ -50,9 +50,13 @@ const UserInput = () => {
   };
 
   const savePetInfoToDatabase = async () => {
+
+    const storedImage = await AsyncStorage.getItem(`pet_image_${user?.userID}`)
+
     const dataToSend = {
       ...input,
       userID: user?.userID,
+      petImageUrl: storedImage ? JSON.parse(storedImage) : '',
       formType: "basic_info"  //choose either "basic_info", "medical_record", "personality_habit", "prescription"
     }
 
@@ -69,8 +73,7 @@ const UserInput = () => {
       console.log("Pet info saved successfully to database.")
     } 
     catch (e) {
-      console.log(dataToSend)
-      console.log("Failed to save data: ", e)
+      console.error("Failed to save data: ", e)
     }
   }
 
@@ -120,7 +123,8 @@ const UserInput = () => {
           setLoading(false)
         }
     
-      } catch (e) {
+      } 
+      catch (e) {
         console.error("Error loading pet info from database:", e)
       }
     }

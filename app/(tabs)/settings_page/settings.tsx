@@ -71,6 +71,36 @@ const SettingsPage = () => {
     }
   },[sliderVisible])
 
+  const savePetFeederDeviceToDatabase = async () => {
+    const updatedUserData = {
+      userID: user?.userID,
+      name: user?.name,
+      email: user?.email,
+      password: '',
+      formType: 'user_data',
+      provider: user?.provider,
+      device_id: device,
+      isUpdate: true
+    }
+
+    try{
+      const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?',{
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(updatedUserData)
+      })
+
+      const result = await response.json()
+      console.log('Successfully update pet feeder id to database. ', result)
+    }
+    catch(e){
+      console.error('Saving error to database: ', e)
+    }
+    finally{
+      setLoading(false)
+    }
+  }
+
   return(
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -350,7 +380,7 @@ const SettingsPage = () => {
                     </View>              
                   </Pressable>
                   
-                  <Pressable onPress={() => {setInputVisible(false)}}>
+                  <Pressable onPress={() => {setInputVisible(false); savePetFeederDeviceToDatabase()}}>
                     <View style={styles.popUpOption}>
                       <Text style={text.settings_text}>Save</Text>
                     </View>
