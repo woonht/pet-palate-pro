@@ -4,7 +4,7 @@ import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "reac
 import { SafeAreaView } from "react-native-safe-area-context"
 import Toast from "react-native-toast-message"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
-import { useAuth } from "@/app/auth_context"
+import { useAuth } from "@/components/auth_context"
 import CustomLoader from "@/components/Custom_Loader"
 
 const SignUp = () => {

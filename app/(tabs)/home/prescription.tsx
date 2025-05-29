@@ -4,9 +4,9 @@ import { PlatformPressable } from "@react-navigation/elements"
 import React, { useCallback, useEffect, useState } from "react"
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useAuth } from "@/app/auth_context"
+import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
-import { useTextSize } from "@/app/text_size_context"
+import { useTextSize } from "@/components/text_size_context"
 
 const Prescription = () => {
 

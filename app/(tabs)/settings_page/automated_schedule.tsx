@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import Swipeable, { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useAuth } from "@/app/auth_context"
+import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
 import CustomLoader from "@/components/Custom_Loader"
 
@@ -232,6 +232,7 @@ const AutomatedSchedule = () => {
           mode="time"
           display="spinner"
           is24Hour={true}
+          minuteInterval={30}
           onChange={onChange}
         />
       )}

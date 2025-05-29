@@ -4,8 +4,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import * as Notifications from 'expo-notifications'
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useTextSize } from "@/app/text_size_context"
-import { useAuth } from "@/app/auth_context"
+import { useTextSize } from "@/components/text_size_context"
+import { useAuth } from "@/components/auth_context"
 
   const Notification = () => {
 

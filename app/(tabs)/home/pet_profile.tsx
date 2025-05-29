@@ -5,8 +5,8 @@ import * as ImagePicker from "expo-image-picker"
 import React, { useCallback, useEffect, useState } from "react"
 import { Pressable, StyleSheet, Text, View, Image, Platform, Alert, Modal, ImageBackground, useWindowDimensions } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useAuth } from "@/app/auth_context"
-import { useTextSize } from "@/app/text_size_context"
+import { useAuth } from "@/components/auth_context"
+import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
 
 const Profile = () => {

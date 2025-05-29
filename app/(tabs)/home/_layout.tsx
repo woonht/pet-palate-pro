@@ -1,4 +1,4 @@
-import { useTextSize } from "@/app/text_size_context";
+import { useTextSize } from "@/components/text_size_context";
 import { Stack } from "expo-router";
 import React, { useMemo } from "react";
 

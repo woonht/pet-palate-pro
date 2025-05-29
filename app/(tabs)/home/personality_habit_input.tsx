@@ -3,8 +3,8 @@ import { router } from "expo-router"
 import React, { useEffect, useState } from "react"
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useAuth } from "@/app/auth_context"
-import { useTextSize } from "@/app/text_size_context"
+import { useAuth } from "@/components/auth_context"
+import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
 
 const UserInput = () => {

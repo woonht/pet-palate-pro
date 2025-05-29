@@ -1,5 +1,5 @@
-import { useAuth } from "@/app/auth_context"
-import { useTextSize } from "@/app/text_size_context"
+import { useAuth } from "@/components/auth_context"
+import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
 import { FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons"
 import { useFocusEffect } from "expo-router"

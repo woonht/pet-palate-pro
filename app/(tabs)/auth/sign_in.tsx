@@ -4,9 +4,10 @@ import { Alert, Image, Pressable, StyleSheet, Text, TextInput, View } from "reac
 import { SafeAreaView } from "react-native-safe-area-context"
 import 'expo-dev-client'
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
-import { useAuth } from "@/app/auth_context"
+import { useAuth } from "@/components/auth_context"
 import Toast from 'react-native-toast-message'
 import CustomLoader from "@/components/Custom_Loader"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const SignIn = () => {
 
@@ -59,6 +60,9 @@ const SignIn = () => {
                     photo: '',
                     provider: 'local',
                 })
+
+                await AsyncStorage.setItem('login', 'true')
+
                 router.push('/(tabs)/home/pet_profile')
                 Toast.show({
                     type: 'success',

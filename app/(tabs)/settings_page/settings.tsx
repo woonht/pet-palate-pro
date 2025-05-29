@@ -4,14 +4,13 @@ import React, { useCallback, useEffect, useState } from "react"
 import { Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
 import { Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useAuth } from "@/app/auth_context"
+import { useAuth } from "@/components/auth_context"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import Toast from 'react-native-toast-message'
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useTextSize } from "@/app/text_size_context"
+import { useTextSize } from "@/components/text_size_context"
 import Slider from '@react-native-community/slider'
-import { useColorMode } from "@/app/color_mode"
-import { getThemeColors } from "@/components/color_theme"
+import CustomLoader from "@/components/Custom_Loader"
 
 const SettingsPage = () => {
 
@@ -20,25 +19,15 @@ const SettingsPage = () => {
 
   const [isModeVisible, setModeIsVisible] = useState(false)
   const [descriptionVisible, setDescriptionVisible] = useState(false)
-  const [colorVisible, setColorVisible] = useState(false)
   const [isDog, setIsDog] = useState(false)
   const [count, setCount] = useState(1)
   const [sliderVisible, setSliderVisible] = useState(false)
   const {textSize, setTextSize} = useTextSize()
   const [tempTextSize, setTempTextSize] = useState(textSize)
   const text = dynamicStyles(textSize)
-  const { colorMode, changeColorMode } = useColorMode()
-  const theme = getThemeColors(colorMode)
   const [loading, setLoading] = useState(false)
   const [inputVisible, setInputVisible] = useState(false)
   const [device, setDevice] = useState('')
-
-  const options = [
-    { label: 'Normal', value: 'normal' },
-    { label: 'Red-Green Color Blindness', value: 'red-green' },
-    { label: 'Blue-Yellow Color Blindness', value: 'blue-yellow' },
-    { label: 'Monochromacy', value: 'mono' },
-  ]
 
   useFocusEffect( // Auto-hide when navigating away from this screen
     useCallback(() => {
@@ -50,7 +39,10 @@ const SettingsPage = () => {
     try {
       setLoading(true)
       await GoogleSignin.signOut() // Sign out from Google
-      setUser(null);               // Clear user context
+      setUser(null) // Clear user context
+      
+      await AsyncStorage.setItem('login', 'false')
+
       router.replace('/(tabs)/auth/sign_in') // Navigate to sign in screen      
       Toast.show({
           type: 'success',
@@ -65,6 +57,20 @@ const SettingsPage = () => {
     }
   }
 
+  const saveTextSize = async () => {
+    try{
+      setLoading(true)
+      setTextSize(tempTextSize)
+      await AsyncStorage.setItem(`text_size_${user?.userID}`, JSON.stringify(textSize))
+    }
+    catch(e){
+      console.error('Saving error: ', e)
+    }
+    finally{
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if(sliderVisible){
       setTempTextSize(textSize)
@@ -72,25 +78,36 @@ const SettingsPage = () => {
   },[sliderVisible])
 
   const savePetFeederDeviceToDatabase = async () => {
-    const updatedUserData = {
-      userID: user?.userID,
-      name: user?.name,
-      email: user?.email,
-      password: '',
-      formType: 'user_data',
-      provider: user?.provider,
-      device_id: device,
-      isUpdate: true
-    }
-
     try{
-      const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?',{
+      setLoading(true)
+      const formType = 'user_data'
+      const getresponse = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${user?.name}&formType=${formType}`, {
+          method: 'GET',
+          headers: {'Content-Type' : 'application/json'}
+      })
+
+      const text = await getresponse.text()
+      const getresult = JSON.parse(text)
+      console.log('User data successfully load: ', getresult)
+
+      const updatedUserData = {
+        userID: user?.userID,
+        name: user?.name,
+        email: user?.email,
+        password: getresult.user.password,
+        formType: 'user_data',
+        provider: user?.provider,
+        device_id: device,
+        isUpdate: true
+      }
+
+      const postresponse = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?',{
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updatedUserData)
       })
 
-      const result = await response.json()
+      const result = await postresponse.json()
       console.log('Successfully update pet feeder id to database. ', result)
     }
     catch(e){
@@ -99,6 +116,10 @@ const SettingsPage = () => {
     finally{
       setLoading(false)
     }
+  }
+
+  if(loading){
+    return <CustomLoader/>
   }
 
   return(
@@ -287,54 +308,12 @@ const SettingsPage = () => {
                     </View>              
                   </Pressable>
                   
-                  <Pressable onPress={() => {setSliderVisible(false); setTextSize(tempTextSize)}}>
+                  <Pressable onPress={() => {setSliderVisible(false); saveTextSize()}}>
                     <View style={styles.popUpOption}>
                       <Text style={text.settings_text}>Save</Text>
                     </View>
                   </Pressable>
                 </View>
-
-              </View>
-            </View>
-          </Modal>
-
-          <Pressable onPress={ () => setColorVisible(true) }>
-            <View style={styles.rowSettings}>
-              <View style={styles.IconTextLeft}>
-                <MaterialIcons name="colorize" size={24} color="black" />
-                <Text style={text.settings_text}>Color Palette</Text>
-              </View>
-              <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </View>
-          </Pressable>
-
-          <Modal
-          visible={colorVisible}
-          animationType="fade"
-          transparent={true}
-          onRequestClose={() => setColorVisible(false)}
-          >
-            <View style={styles.modalBackground}>
-              <View style={styles.popUp}>
-              
-                <View style={styles.popUpOption}>
-                  <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Color Palatte</Text>
-                  <Pressable onPress={() => setColorVisible(false)}>
-                    <Entypo name="cross" size={24} color="red" />
-                  </Pressable>              
-                </View>
-                
-                {options.map((options) => (
-                  <Pressable key={options.value} onPress={() => changeColorMode(options.value)}>
-                    <View style={styles.popUpOption}>
-                      <Text style={[text.settings_text, {width: '90%'}]}>{options.label}</Text>
-                      { colorMode == options.value ? 
-                      (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
-                      <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
-                    }
-                    </View>
-                  </Pressable>
-                ))}
 
               </View>
             </View>
