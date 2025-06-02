@@ -56,8 +56,8 @@ app.http('SaveSchedule', {
         const itemToSave = {
           ...schedule,
           timestamp: new Date().toISOString(),
-          id: `${schedule.userID}_${schedule.timeID}`,
-          ScheduleID: `${schedule.userID}_${schedule.timeID}`
+          id: `${schedule.userID}_${schedule.timeID}_${schedule.device_id}`,
+          ScheduleID: `${schedule.userID}_${schedule.timeID}_${schedule.device_id}`
         };
 
         const { resource } = await container.items.upsert(itemToSave);

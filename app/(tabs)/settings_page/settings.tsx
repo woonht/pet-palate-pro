@@ -1,7 +1,7 @@
 import { Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons"
 import { router, useFocusEffect } from "expo-router"
 import React, { useCallback, useEffect, useState } from "react"
-import { Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
+import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
 import { Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/components/auth_context"
@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useTextSize } from "@/components/text_size_context"
 import Slider from '@react-native-community/slider'
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
 
 const SettingsPage = () => {
 
@@ -26,14 +27,40 @@ const SettingsPage = () => {
   const [tempTextSize, setTempTextSize] = useState(textSize)
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(false)
-  const [inputVisible, setInputVisible] = useState(false)
-  const [device, setDevice] = useState('')
+  const [inputVisible, setDeviceVisible] = useState(false)
+  const [device, setDevice] = useState<FeederDevice[]>([])
+  const { loadUserFeeders, activeDeviceId } = useDevices()
+
+  type FeederDevice = {
+    device_name: string;
+    device_id: string;
+  };
+
+  useFocusEffect(
+      useCallback(() => {
+          if (user?.name) {
+              loadUserFeeders(user.name)
+          }
+  }, [user]))
 
   useFocusEffect( // Auto-hide when navigating away from this screen
     useCallback(() => {
       return () => setDescriptionVisible(false); // Called when screen loses focus
     }, [])
   )
+
+  const switchAccount = async () => {
+    try {
+      setLoading(true)
+      router.replace('/(tabs)/auth/device_switcher') // Navigate to sign in screen      
+    } 
+    catch (error) {
+      console.error('Error during switching:', error)
+    }
+    finally{
+      setLoading(false)
+    }
+  }
 
   const logout = async () => {
     try {
@@ -77,9 +104,55 @@ const SettingsPage = () => {
     }
   },[sliderVisible])
 
-  const savePetFeederDeviceToDatabase = async () => {
+  useFocusEffect(
+    useCallback(() => {
+      const getPetFeederDeviceToDatabase = async () => {
+        try{
+          setLoading(true)
+          const formType = 'user_data'
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${user?.name}&formType=${formType}`, {
+              method: 'GET',
+              headers: {'Content-Type' : 'application/json'}
+          })
+    
+          const result = await response.json()
+          console.log('Successfully load data: ', result)
+    
+          if(result && result.user && result.user.feeder){
+            const deviceArray = Array.isArray(result.user.feeder)
+            ? [result.user.feeder]
+            : result.user.feeder
+            setDevice(deviceArray)
+            console.log('Device array: ', deviceArray)
+          }
+        }
+        catch(e){
+          console.error('Loading error from database: ', e)
+        }
+        finally{
+          setLoading(false)
+        }
+      }
+      getPetFeederDeviceToDatabase()
+    },[user, activeDeviceId]))
+
+  const removeDeviceID = async (device_idToRemove:string, status:string) => {
     try{
       setLoading(true)
+      const dataToSend = {
+        device_id: device_idToRemove,
+        device_status: status,
+      }
+      
+      const updateresponse = await fetch(`https://appinput.azurewebsites.net/api/UpdateDeviceRegistration?`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(dataToSend)
+      })
+
+      const result = await updateresponse.json()
+      console.log('Device updated successfully: ', result)
+      
       const formType = 'user_data'
       const getresponse = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${user?.name}&formType=${formType}`, {
           method: 'GET',
@@ -90,6 +163,9 @@ const SettingsPage = () => {
       const getresult = JSON.parse(text)
       console.log('User data successfully load: ', getresult)
 
+      const flattenDevices = device.flat()
+      const filteredDevices = flattenDevices.filter(d => d.device_id !== device_idToRemove)
+      
       const updatedUserData = {
         userID: user?.userID,
         name: user?.name,
@@ -97,25 +173,49 @@ const SettingsPage = () => {
         password: getresult.user.password,
         formType: 'user_data',
         provider: user?.provider,
-        device_id: device,
+        feeder: filteredDevices,
         isUpdate: true
       }
 
-      const postresponse = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?',{
+      const removedresponse = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(updatedUserData)
       })
-
-      const result = await postresponse.json()
-      console.log('Successfully update pet feeder id to database. ', result)
+      
+      const removeresult = await removedresponse.json()
+      setDevice(filteredDevices)
+      console.log('Device removed successfully: ', removeresult)
+      
     }
     catch(e){
-      console.error('Saving error to database: ', e)
+      console.error('Removing error: ', e)
     }
     finally{
+      router.replace('/(tabs)/auth/device_switcher')
       setLoading(false)
     }
+  }
+
+  const confirmationToRemove = (device_idToRemove:string) => {
+    Alert.alert('Select Device Status', `Choose the status for this device:`, 
+      [{text: 'Cancel', style:'cancel'},
+       {text: 'Broken', onPress: () => confirmRemoval(device_idToRemove, 'Broken')},
+       {text: 'Unbind', onPress: () => confirmRemoval(device_idToRemove, 'unbind')}
+      ])
+  }
+      
+  const confirmRemoval = (device_idToRemove:string, status:string) => {
+    Alert.alert('Removing Device', `Are you confirm to remove the device as ${status}?`, 
+      [{text: 'No', style: 'cancel'},
+      {text: 'Yes', style: 'destructive', onPress: () => {removeDeviceID(device_idToRemove, status); setDeviceVisible(false)} }])
+  }
+
+  const debug = () => {
+    console.log(device);
+    const flattenDevices = device.flat();
+    const filteredDevices = flattenDevices.filter(d => d.device_id !== activeDeviceId);
+    console.log(filteredDevices);
   }
 
   if(loading){
@@ -245,6 +345,15 @@ const SettingsPage = () => {
               <Text style={text.settings_text}>(-) - Decrease the number of times per day.</Text>
             </View>
           )}
+
+          <Pressable onPress={switchAccount}>
+            <View style={styles.rowSettings}>
+              <View style={styles.IconTextLeft}>
+                <MaterialCommunityIcons name="account-switch-outline" size={24} color="black" />
+                <Text style={text.settings_text}>Switch device</Text>
+              </View> 
+            </View>            
+          </Pressable>
           
           <Pressable onPress={logout}>
             <View style={styles.rowSettings}>
@@ -319,7 +428,7 @@ const SettingsPage = () => {
             </View>
           </Modal>
 
-          <Pressable onPress={() => setInputVisible(true)}>
+          <Pressable onPress={() => setDeviceVisible(true)}>
             <View style={styles.rowSettings}>
                 <View style={styles.IconTextLeft}>
                   <MaterialIcons name="device-hub" size={24} color="black" />
@@ -332,43 +441,59 @@ const SettingsPage = () => {
           <Modal
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setInputVisible(false)}
+          onRequestClose={() => setDeviceVisible(false)}
           visible={inputVisible}
           >
             <View style={styles.modalBackground}> 
               <View style={styles.popUp}>
                 <View style={styles.popUpOption}>
-                  <Text style={text.settings_text}>Pet Feeder Device</Text>
-                  <Pressable onPress={() => setInputVisible(false)}>
+                  <Text style={[text.settings_title, {fontWeight: 'bold'}]}>Pet Feeder Device</Text>
+                  <Pressable onPress={() => setDeviceVisible(false)}>
                     <Entypo name="cross" size={24} color="red" />
                   </Pressable>   
                 </View>
 
-                <TextInput
-                style={[styles.input, text.settings_text]}
-                placeholder="pet_feeder_1"
-                placeholderTextColor={'grey'}
-                value={device}
-                onChangeText={(text) => setDevice(text)}
-                />
-
-                <View style={styles.rowSettings}>
-                  <Pressable onPress={() => setInputVisible(false)}>
+                {device.flat().map((devices, index) => ( // since it is a nested array therefore need to flaten it first
+                  <View key={devices.device_id}>
                     <View style={styles.popUpOption}>
-                      <Text style={text.settings_text}>Cancel</Text>
-                    </View>              
-                  </Pressable>
-                  
-                  <Pressable onPress={() => {setInputVisible(false); savePetFeederDeviceToDatabase()}}>
-                    <View style={styles.popUpOption}>
-                      <Text style={text.settings_text}>Save</Text>
-                    </View>
-                  </Pressable>
-                </View>                  
+                      <View style={styles.devices}>
+                        <Text style={text.settings_text}>{index+1}. </Text>
+                        <Text style={text.settings_text}>{devices.device_name}</Text>
+                      </View>
+                      <Pressable onPress={() => confirmationToRemove(devices.device_id)}>
+                        <Text style={[text.settings_text, {color: 'red'}]}>Remove</Text>
+                      </Pressable>
+                    </View>           
+                    <View style={styles.devices_id}>
+                      <Text style={[text.settings_text, {color:'grey'}]}>ID: {devices.device_id}</Text>
+                    </View>  
+                  </View>
+                ))}
               </View>
             </View>
+
           </Modal>
 
+          <Pressable>
+            <View style={styles.rowSettings}>
+                <View style={styles.IconTextLeft}>
+                  <MaterialIcons name="question-mark" size={24} color="black" />
+                  <Text style={text.settings_text}>FAQ</Text>
+                </View>
+                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+            </View>
+          </Pressable>
+
+          <Pressable onPress={debug}>
+            <View style={styles.rowSettings}>
+                <View style={styles.IconTextLeft}>
+                  <MaterialIcons name="question-mark" size={24} color="black" />
+                  <Text style={text.settings_text}>debug</Text>
+                </View>
+                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
+            </View>
+          </Pressable>
+                
         </View>
       </ScrollView>
     </SafeAreaView>  
@@ -501,8 +626,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 10,
-    marginTop: 15,
+    marginTop: 5,
     marginBottom: 15,
+  },
+
+  devices: {
+
+    flexDirection: 'row',
+    gap: 5,
+  },
+
+  devices_id: {
+
+    flexDirection: 'column',
+    paddingHorizontal: 50,
   },
 })
 

@@ -50,7 +50,7 @@ const SignIn = () => {
 
             const text = await response.text()
             const result = JSON.parse(text)
-            console.log(result)
+            console.warn(result)
 
             if(username === result.user.name && password === result.user.password){
                 setUser({
@@ -63,7 +63,7 @@ const SignIn = () => {
 
                 await AsyncStorage.setItem('login', 'true')
 
-                router.push('/(tabs)/home/pet_profile')
+                router.replace('/(tabs)/auth/device_switcher')
                 Toast.show({
                     type: 'success',
                     text1: 'Signed in successfully',
@@ -140,7 +140,7 @@ const SignIn = () => {
                     
                     const save = await response.json()
                     console.log('Saved', save)
-                    router.push('/(tabs)/home/pet_profile')
+                    router.replace('/(tabs)/auth/device_switcher')
                     
                     Toast.show({
                         type: 'success',

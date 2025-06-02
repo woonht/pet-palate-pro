@@ -1,17 +1,28 @@
 import { AntDesign, MaterialIcons } from "@expo/vector-icons"
 import { PlatformPressable } from "@react-navigation/elements"
-import { router } from "expo-router"
-import React, { useState } from "react"
+import { router, useFocusEffect } from "expo-router"
+import React, { useCallback, useState } from "react"
 import { Alert, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
+import { useAuth } from "@/components/auth_context"
 
 const FoodDispense = () => {
 
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
+  const { loadUserFeeders, activeDeviceId } = useDevices()
+  
+  useFocusEffect(
+      useCallback(() => {
+          if (user?.name) {
+              loadUserFeeders(user.name)
+          }
+  }, [user]))
 
   const sendDispenseCommand = async () => {
     try{

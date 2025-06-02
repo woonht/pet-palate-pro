@@ -6,8 +6,9 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
 
-const UserInput = () => {
+const UserInputPersonalityHabit = () => {
   const [input, setInput] = useState({
     temperament:'',
     skills:'',
@@ -18,6 +19,7 @@ const UserInput = () => {
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
 
   const handleChange = (key:string, value:string) => {
       setInput(prev => ({ ...prev, [key]: value }))
@@ -50,7 +52,8 @@ const UserInput = () => {
     const dataToSend = {
       ...input,
       userID: user?.userID,
-      formType: 'personality_habit'
+      formType: 'personality_habit',
+      device_id: activeDeviceId,
     }
     
     try{
@@ -84,7 +87,7 @@ const UserInput = () => {
       try {
         await loadPetPersonalityHabit()
         const formType = 'personality_habit'
-        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}`, {
+        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
           method: "GET",
           headers: { "Content-Type" : "application/json" },
         })
@@ -94,6 +97,7 @@ const UserInput = () => {
     
         if (!text) {
           console.warn("Empty response received from backend.")
+          setLoading(false)
           return
         }
     
@@ -101,6 +105,7 @@ const UserInput = () => {
   
         if (result.error) {
           console.warn("Server responded with error:", result.error)
+          setLoading(false)
           return
         }
     
@@ -120,12 +125,17 @@ const UserInput = () => {
       }
     }
     loadPetInfoFromDatabase()
-  },[user]) // <-- re-run when user changes
+  },[user, activeDeviceId]) // <-- re-run when user changes
 
   const empty = () => {
     Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 
       [{text: 'No', style: "cancel"}, 
         {text: 'Clear', style: "destructive", onPress: () => setInput({ temperament:'', skills:'', like:'', dislike:''} )}] )
+  }
+
+  const debug = () => {
+    console.log(activeDeviceId)
+    console.log(user?.userID)
   }
 
   if(loading){
@@ -186,6 +196,13 @@ const UserInput = () => {
           </Pressable>
         </View>
 
+        <View style={styles.save_empty}>
+          <Pressable onPress={debug}>
+            <Text style={text.settings_text}>debug</Text>
+          </Pressable>
+        </View>
+
+
     </SafeAreaView>
   )
 }
@@ -233,4 +250,4 @@ const dynamicStyles = (textSize:number) => ({
   },
 })
 
-export default UserInput
+export default UserInputPersonalityHabit

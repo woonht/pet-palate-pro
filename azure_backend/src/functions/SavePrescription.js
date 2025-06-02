@@ -50,7 +50,7 @@ app.http('SavePetPrescription', {
 
       const container = client.database(dbName).container("Prescription");
       
-      itemToSave.id = `${prescriptionData.userID}_${prescriptionData.timeID}`;
+      itemToSave.id = `${prescriptionData.userID}_${prescriptionData.timeID}_${prescriptionData.device_id}`;
       itemToSave.presID = itemToSave.id
 
       const { resource } = await container.items.create(itemToSave);

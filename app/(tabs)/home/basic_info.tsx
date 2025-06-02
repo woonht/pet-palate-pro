@@ -8,6 +8,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context";
 import CustomLoader from "@/components/Custom_Loader";
+import { useDevices } from "@/components/device_context";
 
 const BasicInfo = () => {
 
@@ -29,10 +30,11 @@ const BasicInfo = () => {
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
 
   const loadPetInfo = async () => {
     try {
-      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}`)
+      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}_${activeDeviceId}`)
       if (storedInfo) {
         setBasicInfo(JSON.parse(storedInfo))
         console.log('Data load successfully')
@@ -45,7 +47,7 @@ const BasicInfo = () => {
   
   const loadPetPersonalityHabit = async () => {
     try{
-      const storedPersonalityHabit = await AsyncStorage.getItem(`pet_personality_habit_${user?.userID}`)
+      const storedPersonalityHabit = await AsyncStorage.getItem(`pet_personality_habit_${user?.userID}_${activeDeviceId}`)
       if(storedPersonalityHabit)
         setPersonalityHabit(JSON.parse(storedPersonalityHabit))
     }
@@ -65,7 +67,7 @@ const BasicInfo = () => {
     try {
       await loadPetInfo()
       const formType = 'basic_info'
-      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
         method: "GET",
         headers: { "Content-Type" : "application/json" },
       })
@@ -75,6 +77,7 @@ const BasicInfo = () => {
   
       if (!text) {
         console.warn("Empty response received from backend.")
+        setLoading(false)
         return
       }
   
@@ -113,7 +116,7 @@ const BasicInfo = () => {
     try {
       await loadPetPersonalityHabit()
       const formType = 'personality_habit'
-      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}`, {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPersonalityHabit?userID=${user.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
         method: "GET",
         headers: { "Content-Type" : "application/json" },
       })
@@ -123,6 +126,7 @@ const BasicInfo = () => {
   
       if (!text) {
         console.warn("Empty response received from backend.")
+        setLoading(false)
         return
       }
   
@@ -157,7 +161,7 @@ const BasicInfo = () => {
         setLoading(false)
       }
       fetchData()
-    }, [user])
+    }, [user, activeDeviceId])
   )
 
   if(loading){
@@ -186,7 +190,7 @@ const BasicInfo = () => {
                     <MaterialCommunityIcons name="tag-text" size={24} color="#AA4600" />                  
                     <View>
                       <Text style={[styles.basic_info, text.settings_subtitle]}>Name</Text>
-                      <Text style={text.settings_text}>{basic_info.name || 'Bobby'}</Text>
+                      <Text style={text.settings_text}>{basic_info.name || 'Pet Name'}</Text>
                     </View>
                   </View>
                 </View>

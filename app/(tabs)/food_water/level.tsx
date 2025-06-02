@@ -6,6 +6,7 @@ import { useFocusEffect } from "expo-router"
 import React, { useCallback, useState } from "react"
 import { StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { useDevices } from "@/components/device_context"
 
 const Monitor = () => {
 
@@ -16,6 +17,14 @@ const Monitor = () => {
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
+  const { loadUserFeeders, activeDeviceId } = useDevices()
+ 
+  useFocusEffect(
+      useCallback(() => {
+          if (user?.name) {
+              loadUserFeeders(user.name)
+          }
+  }, [user]))
 
   const foodLevel = async () => {
     try{

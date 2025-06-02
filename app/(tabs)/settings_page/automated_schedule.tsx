@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
 
 const AutomatedSchedule = () => {
   const [time, setTime] = useState(new Date())
@@ -17,6 +18,7 @@ const AutomatedSchedule = () => {
   const [timelist, setTimeList] = useState<ScheduleType[]>([])
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
   
   type ScheduleType = {
     userID: string;
@@ -34,7 +36,7 @@ const AutomatedSchedule = () => {
 
   const saveTimeList = async (toStore: {userID:string, timeID:string, time:string}[]) => {
     try {
-      await AsyncStorage.setItem(`schedule_${user?.userID}`, JSON.stringify(toStore))
+      await AsyncStorage.setItem(`schedule_${user?.userID}_${activeDeviceId}`, JSON.stringify(toStore))
     } 
     catch (e) {
       console.error("Saving Error:", e)
@@ -43,7 +45,7 @@ const AutomatedSchedule = () => {
 
   const loadTimeList = async () => {
     try {
-      const stored = await AsyncStorage.getItem(`schedule_${user?.userID}`)
+      const stored = await AsyncStorage.getItem(`schedule_${user?.userID}_${activeDeviceId}`)
       if (!stored) return
 
       const parsed = JSON.parse(stored)
@@ -77,7 +79,8 @@ const AutomatedSchedule = () => {
       userID: user!.userID,
       timeID: e.timeID,
       time: e.time.toISOString(),
-      formType: e.formType
+      formType: e.formType,
+      device_id: activeDeviceId,
     }))
 
     console.log(toStore)
@@ -118,7 +121,7 @@ const AutomatedSchedule = () => {
         try{
           await loadTimeList()
           const formType = 'schedule'
-          const response = await fetch(`https://appinput.azurewebsites.net/api/GetSchedule?userID=${user?.userID}&formType=${formType}`, {
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetSchedule?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
             method: "GET",
             headers: {'Content-Type': 'application/json'}
           })
@@ -181,10 +184,12 @@ const AutomatedSchedule = () => {
 
   const deleteInDatabase = async (index: number) => {
     const entry = timelist[index]
-    if (!entry) return
-
+    if (!entry) {
+      console.log('!entry')
+      return
+    }
     try {
-      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteSchedule?userID=${entry.userID}&timeID=${entry.timeID}`, {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteSchedule?userID=${entry.userID}&timeID=${entry.timeID}&device_id=${activeDeviceId}`, {
         method: "DELETE",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -198,10 +203,12 @@ const AutomatedSchedule = () => {
       try {
         const result = text ? JSON.parse(text) : {}
         console.log('Time entry successfully deleted from database.', result)
-      } catch (e) {
+      } 
+      catch (e) {
         console.warn('Could not parse delete response JSON:', text)
       }
-    } catch (e) {
+    } 
+    catch (e) {
       console.error('Deleting error: ', e)
     }
   }

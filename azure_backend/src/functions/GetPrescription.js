@@ -1,4 +1,3 @@
-// GetPetPrescription.js
 const { app } = require('@azure/functions');
 const { CosmosClient } = require("@azure/cosmos");
 
@@ -15,11 +14,12 @@ app.http('GetPetPrescription', {
 
     const userID = request.query.get("userID");
     const formType = request.query.get("formType");
+    const device_id = request.query.get("device_id");
 
-    if (!userID || !formType) {
+    if (!userID || !formType || !device_id) {
       return {
         status: 400,
-        body: JSON.stringify({ error: "Missing formType or userID in query parameters." }),
+        body: JSON.stringify({ error: "Missing formType or userID or device_id in query parameters." }),
       };
     }
 
@@ -27,8 +27,10 @@ app.http('GetPetPrescription', {
 
     try {
       const query = {
-        query: "SELECT * FROM c WHERE c.userID = @userID",
-        parameters: [{ name: "@userID", value: userID }]
+        query: "SELECT * FROM c WHERE c.userID = @userID AND c.device_id = @device_id",
+        parameters: [{ name: "@userID", value: userID },
+                     { name: "@device_id", value: device_id}
+        ]
       }
 
       const { resources } = await container.items.query(query).fetchAll()

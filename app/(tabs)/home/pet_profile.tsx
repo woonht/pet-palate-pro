@@ -8,6 +8,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
+import * as FileSystem from 'expo-file-system'
 
 const Profile = () => {
 
@@ -28,6 +30,14 @@ const Profile = () => {
     const { textSize } = useTextSize()
     const text = dynamicStyles(textSize)
     const [loading, setLoading] = useState(true)
+    const { loadUserFeeders, activeDeviceId } = useDevices()
+
+    useFocusEffect(
+        useCallback(() => {
+            if (user?.name) {
+                loadUserFeeders(user.name)
+            }
+    }, [user, activeDeviceId]))
 
     useEffect(() => { //useEffect only runs once and will not run again if the component is kept in memory (using expo router), eg. pet_profile -> basic_info -> pet_profile, update in basic_info will not update pet_profile because pet_profile is kept in memory
         (async () => {
@@ -73,6 +83,7 @@ const Profile = () => {
 
         if(image){ // image not null
             setImage(undefined)
+            savePetImageToDatabase('')
         }
         else{
             Alert.alert('The image now is the default profile image.')
@@ -82,7 +93,7 @@ const Profile = () => {
 
     const savePetImage = async (image_uri:string) => {
         try{
-            await AsyncStorage.setItem(`pet_image_${user?.userID}`, JSON.stringify(image_uri))
+            await AsyncStorage.setItem(`pet_image_${user?.userID}_${activeDeviceId}`, JSON.stringify(image_uri))
             console.log('Image saved to AsyncStorage.')
         }
         catch(e){
@@ -90,27 +101,47 @@ const Profile = () => {
         }
     }
 
-    const savePetImageToDatabase = async (image_uri:string) => {
-        const dataToSend = {
-            ...basic_info,
-            userID: user?.userID,
-            formType: 'basic_info',
-            petImageUrl: image_uri
-        }
+    const savePetImageToDatabase = async (imageUri: string) => {
+        try {
+            const fileName = imageUri.split('/').pop() || `pet_${Date.now()}.jpg`;
+            const mimeType = 'image/jpeg'; // You can use a library to detect mime type if needed
 
-        try{
-            await savePetImage(image_uri)
-            const response = await fetch('https://appinput.azurewebsites.net/api/SavePetData?', {
+            const formData = new FormData();
+            formData.append('userID', user?.userID ?? '');
+            formData.append('device_id', activeDeviceId ?? '');
+            formData.append('file', {
+            uri: imageUri,
+            name: fileName,
+            type: mimeType,
+            } as any); // workaround for TypeScript
+
+            const response = await fetch('https://appinput.azurewebsites.net/api/UploadPetImage', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(dataToSend)
-            })
+                body: formData,
+                // Don't set headers manually — fetch will set Content-Type correctly for FormData
+            });
 
-            const result = await response.json()
-            console.log('Succssfully update pet image into database. ', result)
-        }
-        catch(e){
-            console.error('Saving error to database: ', e)
+            const text = await response.text(); // Get raw response first
+            let json;
+
+            try {
+            json = JSON.parse(text); // Try parsing it
+            } catch (parseError) {
+            console.error('❌ Failed to parse JSON:', parseError);
+            console.error('Raw response:', text);
+            return;
+            }
+
+            if (response.ok) {
+            console.log('Successfully updated pet image in database:', json);
+            // Optionally update UI with result.imageUrl
+            } 
+            else {
+            console.error('Failed to upload image:', json);
+            }
+        } 
+        catch (error) {
+            console.error('Error uploading pet image:', error);
         }
         finally{
             setLoading(false)
@@ -119,7 +150,7 @@ const Profile = () => {
 
     const loadPetImage = async () => {
         try{
-            const storedImage = await AsyncStorage.getItem(`pet_image_${user?.userID}`)
+            const storedImage = await AsyncStorage.getItem(`pet_image_${user?.userID}_${activeDeviceId}`)
             if (storedImage){
                 setImage(JSON.parse(storedImage))
             }
@@ -135,7 +166,7 @@ const Profile = () => {
     
     const loadPetInfo = async () => {
         try{
-            const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}`)
+            const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}_${activeDeviceId}`)
             if(storedInfo)
                 setBasicInfo(JSON.parse(storedInfo))
             console.log('Data load successfully.')
@@ -156,37 +187,58 @@ const Profile = () => {
         try {
             await loadPetInfo()
             const formType = 'basic_info'
-            const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
-            method: "GET",
-            headers: { "Content-Type" : "application/json" },
+            const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
+                method: "GET",
+                headers: { "Content-Type" : "application/json" },
             })
         
             const text = await response.text() // Read raw response
             console.log("Raw response text:", text) // Debug what was returned
         
             if (!text) {
-            console.warn("Empty response received from backend.")
-            return
+                console.warn("Empty response received from backend.")
+                setBasicInfo({
+                    name: '',
+                    birthdate: '',
+                    species: '',
+                    breed: '',
+                    sex: '',
+                    weight: '',
+                })
+                setImage(undefined)
+                setLoading(false)
+                return
             }
         
             const result = JSON.parse(text) // Only parse if not empty
     
             if (result.error) {
-            console.warn("Server responded with error:", result.error)
-            return
+                console.warn("Server responded with error:", result.error)
+                setBasicInfo({
+                    name: '',
+                    birthdate: '',
+                    species: '',
+                    breed: '',
+                    sex: '',
+                    weight: '',
+                })
+                setImage(undefined)
+                setLoading(false)
+                return
             }
         
             if (result && typeof result === "object") {
-            setBasicInfo({
-                name: result.name || '',
-                birthdate: result.birthdate || '',
-                species: result.species || '',
-                breed: result.breed || '',
-                sex: result.sex || '',
-                weight: result.weight || '',
-            })
-            console.log("Pet info loaded:", result)
-            setLoading(false)
+                setBasicInfo({
+                    name: result.name || '',
+                    birthdate: result.birthdate || '',
+                    species: result.species || '',
+                    breed: result.breed || '',
+                    sex: result.sex || '',
+                    weight: result.weight || '',
+                })
+                setImage(result.petImageUrl)
+                console.log("Pet info loaded:", result)
+                setLoading(false)
             }
         } 
         catch (e) {
@@ -201,7 +253,7 @@ const Profile = () => {
                 await loadPetInfoFromDatabase()
             }
             fetchData()
-        },[user]))
+        },[user, activeDeviceId]))
 
     if(loading){
         return <CustomLoader/>

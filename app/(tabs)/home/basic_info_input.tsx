@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context";
 import CustomLoader from "@/components/Custom_Loader";
+import { useDevices } from "@/components/device_context";
 
 const UserInput = () => {
 
@@ -21,10 +22,11 @@ const UserInput = () => {
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
 
   const loadPetInfoFromStorage = async () => {
     try{
-      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}`)
+      const storedInfo = await AsyncStorage.getItem(`pet_info_${user?.userID}_${activeDeviceId}`)
       if(storedInfo)
         setInput(JSON.parse(storedInfo))
       console.log('Data load successfully')
@@ -36,7 +38,7 @@ const UserInput = () => {
       
   const savePetInfoToStorage = async () => {
     try {
-      await AsyncStorage.setItem(`pet_info_${user?.userID}`, JSON.stringify(input)) // save your object, without await, the code would continue before the fetch is complete, which would cause bugs or empty results.
+      await AsyncStorage.setItem(`pet_info_${user?.userID}_${activeDeviceId}`, JSON.stringify(input)) // save your object, without await, the code would continue before the fetch is complete, which would cause bugs or empty results.
       router.back()
       console.log('Data saved to AsyncStorage!') // wait until the data is saved before printing
     } 
@@ -51,11 +53,12 @@ const UserInput = () => {
 
   const savePetInfoToDatabase = async () => {
 
-    const storedImage = await AsyncStorage.getItem(`pet_image_${user?.userID}`)
+    const storedImage = await AsyncStorage.getItem(`pet_image_${user?.userID}_${activeDeviceId}`)
 
     const dataToSend = {
       ...input,
       userID: user?.userID,
+      device_id: activeDeviceId,
       petImageUrl: storedImage ? JSON.parse(storedImage) : '',
       formType: "basic_info"  //choose either "basic_info", "medical_record", "personality_habit", "prescription"
     }
@@ -90,7 +93,7 @@ const UserInput = () => {
       try {
         await loadPetInfoFromStorage()
         const formType = 'basic_info'
-        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}`, {
+        const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetData?userID=${user.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
           method: "GET",
           headers: { "Content-Type" : "application/json" },
         })
@@ -100,6 +103,7 @@ const UserInput = () => {
     
         if (!text) {
           console.warn("Empty response received from backend.")
+          setLoading(false)
           return
         }
     
@@ -107,6 +111,7 @@ const UserInput = () => {
   
         if (result.error) {
           console.warn("Server responded with error:", result.error)
+          setLoading(false)
           return
         }
     
@@ -129,7 +134,7 @@ const UserInput = () => {
       }
     }
     loadPetInfoFromDatabase()
-  },[user]) // <-- re-run when user changes
+  },[user, activeDeviceId]) // <-- re-run when user changes
 
   const empty = () => {
     Alert.alert('Warning!', 'Are you sure to clear all the input fill?', 

@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
 
 const Medical = () => {
 
@@ -23,6 +24,7 @@ const Medical = () => {
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
 
   type MedicalRecordType = {
     userID: string;
@@ -48,7 +50,7 @@ const Medical = () => {
     const updatedMedicalRecord = [...medicalRecord, newMedicalRecord]
 
     try{
-      await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(updatedMedicalRecord))
+      await AsyncStorage.setItem(`medicalRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(updatedMedicalRecord))
       setMedicalRecord(updatedMedicalRecord)
       console.log('Data save successfully.')
     }
@@ -59,7 +61,7 @@ const Medical = () => {
 
   const loadMedicalRecord = async () => {
     try{
-      const storedMedicalRecord = await AsyncStorage.getItem(`medicalRecord_${user?.userID}`)
+      const storedMedicalRecord = await AsyncStorage.getItem(`medicalRecord_${user?.userID}_${activeDeviceId}`)
       if(storedMedicalRecord)
         setMedicalRecord(JSON.parse(storedMedicalRecord))
       console.log('Data load successfully.')
@@ -72,7 +74,7 @@ const Medical = () => {
   const handleDelete = async (id: string) => {
     try{
       const updatedMedicalRecord = medicalRecord.filter(item => item.timeID !== id)
-      await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(updatedMedicalRecord))
+      await AsyncStorage.setItem(`medicalRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(updatedMedicalRecord))
       setMedicalRecord(updatedMedicalRecord)
       console.log('Data delete successfully.')
     }
@@ -86,7 +88,8 @@ const Medical = () => {
       ...popUpInput,
       timeID: Date.now().toString(),
       userID: user!.userID,
-      formType: 'medical_record'
+      formType: 'medical_record',
+      device_id: activeDeviceId,
     }
   
     try {
@@ -123,7 +126,7 @@ const Medical = () => {
         try {
           await loadMedicalRecord() 
           const formType = 'medical_record'
-          const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetMedicalRecord?userID=${user?.userID}&formType=${formType}`, {
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetMedicalRecord?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
           })
@@ -131,6 +134,7 @@ const Medical = () => {
           // Check if response is OK before parsing
           if (!response.ok) {
             const errorText = await response.text()
+            setLoading(false)
             throw new Error(errorText || 'Failed to load medical record')
           }
       
@@ -139,13 +143,13 @@ const Medical = () => {
       
           if (result && Array.isArray(result)) {
             setMedicalRecord(result)
-            await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(result))
+            await AsyncStorage.setItem(`medicalRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(result))
             setLoading(false)
           } 
           else if (result && typeof result === "object") {
-            const prescriptionsArray = [result]
-            setMedicalRecord(prescriptionsArray)
-            await AsyncStorage.setItem(`medicalRecord_${user?.userID}`, JSON.stringify(prescriptionsArray))
+            const medicalArray = [result]
+            setMedicalRecord(medicalArray)
+            await AsyncStorage.setItem(`medicalRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(medicalArray))
             setLoading(false)
           } 
           else {
@@ -157,14 +161,14 @@ const Medical = () => {
         }
       }
       loadFromDatabase()
-    },[user]))
+    },[user, activeDeviceId]))
 
   const deleteInDatabase = async ( timeID:string ) => {
     try{
       await handleDelete(timeID)
       console.log('timeID', timeID)
       console.log('userID', user?.userID)
-      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteMedicalRecord?userID=${user?.userID}&timeID=${timeID}`, {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteMedicalRecord?userID=${user?.userID}&timeID=${timeID}&device_id=${activeDeviceId}`, {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json'}
       })

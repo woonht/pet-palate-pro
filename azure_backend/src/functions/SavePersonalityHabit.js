@@ -15,7 +15,7 @@ app.http('SavePersonalityHabit', {
         try{
             const personality_habit_data = await request.json();
 
-            if(!personality_habit_data || !personality_habit_data.formType){
+            if(!personality_habit_data || !personality_habit_data.formType || !personality_habit_data.device_id){
                 return{
                     status:400,
                     headers: { "Content-Type": "application/json" },
@@ -36,10 +36,11 @@ app.http('SavePersonalityHabit', {
 
             const itemToSave = {
                 ...personality_habit_data,
-                timeStamp: new Date().toISOString
+                timeStamp: new Date().toISOString,
+                habitID: `${personality_habit_data.userID}_${personality_habit_data.device_id}`
             };
 
-            itemToSave.id = personality_habit_data.userID;
+            itemToSave.id = `${personality_habit_data.userID}_${personality_habit_data.device_id}`;
 
             let resource;
             if(itemToSave.id){

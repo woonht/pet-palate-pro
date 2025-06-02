@@ -16,7 +16,7 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
   const hiddenTabScreens = ['basic_info', 'basic_info_input', 'personality_habit_input', 
                             'medical_record', 'prescription', 'log',
                             'notification', 'automated_schedule',
-                            'sign_in', 'sign_up'];
+                            'sign_in', 'sign_up', 'device_switcher'];
   
   if (hiddenTabScreens.includes(routeName)) {
     return null;

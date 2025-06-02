@@ -6,42 +6,40 @@ const key = process.env.COSMOS_KEY;
 const dbName = process.env.COSMOS_DB_NAME;
 const client = new CosmosClient({ endpoint, key }); //used to interact with the database (read/write operations), endpoint specific where is the db, key means i am allowed to access
 
-app.http('SavePetData', {
+app.http('SaveDeviceConfig', {
     methods: ['POST'],
     authLevel: 'anonymous',
     handler: async (request, context) => {
-        context.log('SavePetData triggered');
+        context.log('SaveDeviceConfig triggered');
         
         try {
             const data = await request.json();
 
-            if (!data || !data.formType) {
+            if (!data || !data.formType || !data.device_id) {
                 return {
                     status: 400,
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Missing formType in request body." }),
+                    body: JSON.stringify({ error: "Missing formType and device_id in request body." }),
                 };
             }
 
-            if (data.formType !== "basic_info") {
+            if (data.formType !== "device_config") {
                 return {
                     status: 400,
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Invalid formType. Only 'basic_info' is allowed." }),
+                    body: JSON.stringify({ error: "Invalid formType. Only 'device_config' is allowed." }),
                 };
             }
 
             const database = client.database(dbName);
-            const container = database.container("BasicInfo");
+            const container = database.container("DeviceConfig");
 
             const itemToSave = { 
                 ...data,
-                timestamp: new Date().toISOString() 
-
             };
 
             itemToSave.id = `${data.userID}_${data.device_id}`;
-            itemToSave.infoID = itemToSave.id;
+            itemToSave.device_id = itemToSave.id;
 
             let resource;
             if (itemToSave.id) {
@@ -65,7 +63,7 @@ app.http('SavePetData', {
             return {
                 status: 500,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ error: "Failed to save data." }),
+                body: JSON.stringify({ error: "Failed to save device config." }),
             };
         }
     }

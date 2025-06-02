@@ -49,7 +49,7 @@ app.http('SaveMedicalRecord', {
             const database = client.database(dbName);
             const container = database.container("MedicalRecords");
 
-            itemToSave.id = `${medical_record_data.userID}_${medical_record_data.timeID}`;
+            itemToSave.id = `${medical_record_data.userID}_${medical_record_data.timeID}_${medical_record_data.device_id}`;
             itemToSave.recID = itemToSave.id;
 
             const { resource } = await container.items.upsert(itemToSave);

@@ -7,6 +7,8 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
 import { useTextSize } from "@/components/text_size_context"
+import CustomLoader from "@/components/Custom_Loader"
+import { useDevices } from "@/components/device_context"
 
 const Prescription = () => {
 
@@ -22,6 +24,7 @@ const Prescription = () => {
   const { textSize } = useTextSize()
   const text = dynamicStyles(textSize)
   const [loading, setLoading] = useState(true)
+  const { activeDeviceId } = useDevices()
   
   type PrescriptionType = {
     userID: string;
@@ -47,7 +50,7 @@ const Prescription = () => {
     const updatedPrescriptions = [...prescription, newPrescription];
 
     try{
-      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(updatedPrescriptions))
+      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(updatedPrescriptions))
       setPrescription(updatedPrescriptions)
       console.log('Data save successfully.')
     }
@@ -58,7 +61,7 @@ const Prescription = () => {
 
   const loadPrescription = async () => {
     try{
-      const storedPrescription = await AsyncStorage.getItem(`prescriptionRecord_${user?.userID}`)
+      const storedPrescription = await AsyncStorage.getItem(`prescriptionRecord_${user?.userID}_${activeDeviceId}`)
       if(storedPrescription)
         setPrescription(JSON.parse(storedPrescription))
       console.log('Data load successfully.')
@@ -71,7 +74,7 @@ const Prescription = () => {
   const handleDelete = async (id: string) => {
     try{
       const updatedPrescriptions = prescription.filter(item => item.timeID !== id)
-      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(updatedPrescriptions))
+      await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(updatedPrescriptions))
       setPrescription(updatedPrescriptions)
       console.log('Data delete successfully.')
     }
@@ -85,7 +88,8 @@ const Prescription = () => {
       ...popUpInput,
       timeID: Date.now().toString(),
       userID: user!.userID,
-      formType: 'prescription'
+      formType: 'prescription',
+      device_id: activeDeviceId,
     }
   
     try {
@@ -122,7 +126,7 @@ const Prescription = () => {
         try {
           await loadPrescription()
           const formType = 'prescription'
-          const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?userID=${user?.userID}&formType=${formType}`, {
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetPetPrescription?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
           })
@@ -130,6 +134,7 @@ const Prescription = () => {
           // Check if response is OK before parsing
           if (!response.ok) {
             const errorText = await response.text()
+            setLoading(false)
             throw new Error(errorText || 'Failed to load prescriptions')
           }
       
@@ -138,13 +143,13 @@ const Prescription = () => {
       
           if (result && Array.isArray(result)) {
             setPrescription(result)
-            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(result))
+            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(result))
             setLoading(false)
           } 
           else if (result && typeof result === "object") {
             const prescriptionsArray = [result]
             setPrescription(prescriptionsArray)
-            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}`, JSON.stringify(prescriptionsArray))
+            await AsyncStorage.setItem(`prescriptionRecord_${user?.userID}_${activeDeviceId}`, JSON.stringify(prescriptionsArray))
             setLoading(false)
           } 
           else {
@@ -156,14 +161,14 @@ const Prescription = () => {
         }
       }
       loadFromDatabase()
-    },[user]))
+    },[user, activeDeviceId]))
 
   const deleteInDatabase = async ( timeID:string ) => {
     try{
       await handleDelete(timeID)
       console.log('timeID', timeID)
       console.log('userID', user?.userID)
-      const response = await fetch(`https://appinput.azurewebsites.net/api/DeletePrescription?userID=${user?.userID}&timeID=${timeID}`, {
+      const response = await fetch(`https://appinput.azurewebsites.net/api/DeletePrescription?userID=${user?.userID}&timeID=${timeID}&device_id=${activeDeviceId}`, {
         method: 'DELETE',
         headers: {'Content-Type': 'application/json'}
       })
@@ -184,6 +189,10 @@ const Prescription = () => {
     catch(e){
       console.error('Deleting error: ', e)
     }
+  }
+
+  if(loading){
+    return <CustomLoader/>
   }
 
   return(

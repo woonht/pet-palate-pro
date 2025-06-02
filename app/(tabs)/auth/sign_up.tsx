@@ -29,6 +29,7 @@ const SignUp = () => {
         }
         if (password !== confirm){
             Alert.alert('Error' ,'Password do not match.')
+            return
         }    
         
         setLoading(true)
@@ -53,6 +54,7 @@ const SignUp = () => {
                 // Conflict - username/email exists
                 const errorData = await response.json()
                 Alert.alert('Error', errorData.error)
+                console.error(errorData.error)
                 emptySignInFill()
                 return
             }
@@ -61,6 +63,7 @@ const SignUp = () => {
                 // Handle other errors
                 const errorData = await response.json()
                 Alert.alert('Error', errorData.error)
+                console.error(errorData.error)
                 emptySignInFill()
                 return
             }
@@ -81,7 +84,7 @@ const SignUp = () => {
             const result = await response.json()
             console.log('Saved: ', result)
             console.log('User data saved successfully to database')
-            router.replace('/(tabs)/auth/sign_in')
+            router.replace('/(tabs)/auth/device_switcher')
         }
         catch(e){
             console.error('Saving error: ', e)
@@ -168,7 +171,6 @@ const SignUp = () => {
     }    
 
     if(loading){
-        console.log(loading)
         return <CustomLoader/>
     }
 

@@ -5,6 +5,7 @@ import { useAuth } from "@/components/auth_context"
 import { useFocusEffect } from "expo-router"
 import CustomLoader from "@/components/Custom_Loader"
 import { useTextSize } from "@/components/text_size_context"
+import { useDevices } from "@/components/device_context"
 
 const Logs = () => {
 
@@ -18,24 +19,12 @@ const Logs = () => {
   const { user } = useAuth()
   const {textSize } = useTextSize()
   const text = dynamicStyles(textSize)
+  const { activeDeviceId } = useDevices()
 
   type LogType = {
     photo: string[],
     time: string[]
   }
-
-  const getDeviceidFromDatabase = async () => {
-    const formType = 'user_data'
-    const response = await fetch(`https://appinput.azurewebsites.net/api/GetUserData?name=${user?.name}&formType=${formType}`, {
-      method: "GET",
-      headers: {'Content-Type': 'application/json'}
-    })
-    
-    const text = await response.text()
-    const result = JSON.parse(text)
-    const deviceID = result.user.device_id
-    return deviceID
-  } 
 
   useFocusEffect( 
     useCallback(() => {
@@ -49,14 +38,29 @@ const Logs = () => {
       }
     
       try{
-        const deviceID = await getDeviceidFromDatabase()
+        const deviceID = activeDeviceId
         const response = await fetch(`https://yolo-detection-function.azurewebsites.net/api/get_logs?deviceID=${deviceID}`, {
         method: 'GET',
         headers: {'Content-Type': 'application/json'}
       })
       
         const text = await response.text()
+        console.log('Text: ', text)
+
+        if (!text) {
+          console.warn("Empty response received from backend.")
+          setLoading(false)
+          return
+        }
+
         const result = JSON.parse(text)
+  
+        if (result.error) {
+          console.warn("Server responded with error:", result.error)
+          setLoading(false)
+          return
+        }
+
         console.log(result) // result = [{ blob_url: 'photo1.jpg' }, { blob_url: 'photo2.jpg' },]
         
         if (result && Array.isArray(result)){
@@ -74,7 +78,7 @@ const Logs = () => {
       }
     }
     getLogsFromDatabase()
-  },[user]))
+  },[user, activeDeviceId]))
 
   const formatTimestamp = (time:string) => {
     const date = new Date(time)

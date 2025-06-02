@@ -14,18 +14,19 @@ app.http('DeleteMedicalRecord', {
 
     const userID = request.query.get("userID");
     const timeID = request.query.get("timeID");
+    const device_id = request.query.get("device_id");
 
-    if (!userID || !timeID) {
+    if (!userID || !timeID || !device_id) {
       return {
         status: 400,
         body: JSON.stringify({ 
-          error: "userID and timeID are required in query parameters." 
+          error: "userID, deviceid and timeID are required in query parameters." 
         }),
       };
     }
 
     const container = client.database(dbName).container("MedicalRecords");
-    const id = `${userID}_${timeID}`;
+    const id = `${userID}_${timeID}_${device_id}`;
 
     try {
       try{
