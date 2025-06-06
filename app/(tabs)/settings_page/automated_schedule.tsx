@@ -1,7 +1,7 @@
 import { AntDesign, FontAwesome6 } from "@expo/vector-icons"
 import { PlatformPressable } from "@react-navigation/elements"
 import React, { useCallback, useRef, useState } from "react"
-import { Pressable, StyleSheet, Text, View } from "react-native"
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker"
 import Swipeable, { SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable"
@@ -21,10 +21,9 @@ const AutomatedSchedule = () => {
   const { activeDeviceId } = useDevices()
   
   type ScheduleType = {
-    userID: string;
     timeID: string;
     time: Date;
-    formType: string;
+    isEnable: boolean;
   }
 
   // refs to the Swipeable methods for each row
@@ -34,31 +33,36 @@ const AutomatedSchedule = () => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) // [] use system default locale (kl-GL)
   }
 
-  const saveTimeList = async (toStore: {userID:string, timeID:string, time:string}[]) => {
+  const saveTimeList = async (toStore: {timeID:string, time:string}[]) => {
     try {
       await AsyncStorage.setItem(`schedule_${user?.userID}_${activeDeviceId}`, JSON.stringify(toStore))
     } 
     catch (e) {
       console.error("Saving Error:", e)
     }
+    finally{
+      setLoading(false)
+    }
   }
 
   const loadTimeList = async () => {
     try {
       const stored = await AsyncStorage.getItem(`schedule_${user?.userID}_${activeDeviceId}`)
-      if (!stored) return
+      if (!stored) {
+        setLoading(false)
+        return
+      }
 
       const parsed = JSON.parse(stored)
 
       let entries: ScheduleType[]
 
       if ( Array.isArray(parsed) && parsed.every((x) => x && typeof x === "object")) {
-        entries = (parsed as { timeID: string; time: string }[]).map(
-          ({ timeID, time }) => ({
-            userID: user?.userID ?? "",
+        entries = (parsed as { timeID: string; time: string; isEnable?: boolean }[]).map(
+          ({ timeID, time, isEnable }) => ({
             timeID: timeID,
             time: new Date(time),
-            formType: 'schedule'
+            isEnable: typeof isEnable === "boolean" ? isEnable : true
           })
         )
       }   
@@ -72,41 +76,76 @@ const AutomatedSchedule = () => {
     catch (e) {
       console.error("Loading Error:", e)
     }
+    finally{
+      setLoading(false)
+    }
   }
 
-  const saveTimeToDatabase = async (list:ScheduleType[]) => {
-    const toStore = list.map((e) => ({ // use .map() when need to change the structure or format of the data before saving (.toISOstring())
-      userID: user!.userID,
-      timeID: e.timeID,
-      time: e.time.toISOString(),
-      formType: e.formType,
-      device_id: activeDeviceId,
-    }))
-
-    console.log(toStore)
-
+  const saveTimeToDatabase = async (list:ScheduleType[]) => {  
     try{
-      await saveTimeList(toStore)
-      const response = await fetch('https://appinput.azurewebsites.net/api/SaveSchedule?', {
+      const formType = 'device_config'
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetDeviceConfig?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`,{
+        method: 'GET',
+        headers: {'Content-Type': 'application/json'},
+      })
+      
+      const text = await response.text()
+      
+      if(!text){
+        console.warn('Empty response from backend')
+        setLoading(false)
+        return
+      }
+      
+      const result = JSON.parse(text)
+      console.log('Successfully load device config: ', result)
+
+      const toStoreTime = list.map((e) => ({ // use .map() when need to change the structure or format of the data before saving (.toISOstring())
+        timeID: e.timeID,
+        time: e.time.toISOString(),
+        isEnable: e.isEnable,
+      }))
+  
+      const toStore = {
+        userID: result.userID,
+        device_id: result.device_id,
+        count: result.count,
+        deviceMode: result.deviceMode,
+        formType: result.formType,
+        schedulelist: toStoreTime,
+      }
+      console.log(toStore)
+
+      try{
+        await saveTimeList(toStoreTime)
+        const response = await fetch('https://appinput.azurewebsites.net/api/SaveDeviceConfig?', {
         method: "POST",
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(toStore)
       })
 
       const text = await response.text()
+      
       try {
-        const result = text ? JSON.parse(text) : {}
-        console.log('Time list successfully saved to database.', result)
-      } 
-      catch (e) {
-        console.warn('Could not parse JSON from save response:', text)
+          const result = text ? JSON.parse(text) : {}
+          console.log('Time list successfully saved to database.', result)
+        } 
+        catch (e) {
+          console.warn('Could not parse JSON from save response:', text)
+        }
+      }
+      catch(e){
+        console.error('Saving error: ', e)
       }
     }
     catch(e){
-      console.error('Saving error: ', e)
+      console.error('Device config load error: ', e)
+    }
+    finally{
+      setLoading(false)
     }
   }
-
+  
   useFocusEffect(
     useCallback( () => {
       if (!user || !user.userID) {
@@ -120,19 +159,40 @@ const AutomatedSchedule = () => {
       const loadTimeFromDatabase = async () => {
         try{
           await loadTimeList()
-          const formType = 'schedule'
-          const response = await fetch(`https://appinput.azurewebsites.net/api/GetSchedule?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`, {
-            method: "GET",
-            headers: {'Content-Type': 'application/json'}
+          const formType = 'device_config'
+          const response = await fetch(`https://appinput.azurewebsites.net/api/GetDeviceConfig?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`,{
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'},
           })
-    
+
           const text = await response.text()
+          
+          if(!text){
+            console.warn('Empty response from backend')
+            setLoading(false)
+            return
+          }
+
           const result = JSON.parse(text)
-          console.log('Time list load successfully from database.', result)
-          setLoading(false)
+          console.log('Successfully load device config: ', result)
+
+          if (Array.isArray(result.schedulelist)) {
+            const entries: ScheduleType[] = result.schedulelist.map(
+              ({ timeID, time, isEnable }: { timeID: string; time: string; isEnable: boolean }) => ({
+                timeID,
+                time: new Date(time),
+                isEnable: isEnable ?? false,
+              })
+            )
+            setTimeList(entries)
+            setIsToggle(entries.map((entry) => entry.isEnable))
+          }
         }
         catch(e){
-          console.error('Loading error: ', e)
+          console.error('Device config load error: ', e)
+        }
+        finally{
+          setLoading(false)
         }
       }
       loadTimeFromDatabase()
@@ -147,15 +207,29 @@ const AutomatedSchedule = () => {
     setIsVisible(false)
 
     if (selectedTime) {
+      // Normalize selected time to hours and minutes only
+      const selectedHour = selectedTime.getHours()
+      const selectedMinute = selectedTime.getMinutes()
+
+      const isDuplicate = timelist.some(({ time }) => {
+        return time.getHours() === selectedHour && time.getMinutes() === selectedMinute
+      })
+
+      if (isDuplicate) {
+        Alert.alert("Duplicate Time", "This time has already been added.")
+        return
+      }
+
       const newEntry: ScheduleType = {
-        userID: user?.userID ?? "",
         timeID: Date.now().toString(),
         time: selectedTime,
-        formType: 'schedule'
+        isEnable: true,
       }
+
       const updated = [...timelist, newEntry].sort(
         (a, b) => a.time.getTime() - b.time.getTime()
       )
+
       setTimeList(updated)
       saveTimeToDatabase(updated)
       setIsToggle(new Array(updated.length).fill(false))
@@ -167,50 +241,27 @@ const AutomatedSchedule = () => {
     setIsToggle((toggles) =>
       toggles.map((v, i) => (i === index ? !v : v)) // .map() takes up 3 arguments (current_value, index, array)
     )
+
+    setTimeList((prev) => {
+      const updated = [...prev]
+      updated[index] = {
+        ...updated[index],
+        isEnable: !updated[index].isEnable,
+      }
+      saveTimeToDatabase(updated)
+      return updated
+    })
   }
 
   const removeTime = (index: number) => {
     const ref = swipeableRefs.current[index]
     if (ref) ref.close()
 
-    deleteInDatabase(index)
-
     const updated = timelist.filter((_, i) => i !== index)
     setTimeList(updated)
     setIsToggle((t) => t.filter((_, i) => i !== index))
     saveTimeToDatabase(updated)
     swipeableRefs.current.splice(index, 1)
-  }
-
-  const deleteInDatabase = async (index: number) => {
-    const entry = timelist[index]
-    if (!entry) {
-      console.log('!entry')
-      return
-    }
-    try {
-      const response = await fetch(`https://appinput.azurewebsites.net/api/DeleteSchedule?userID=${entry.userID}&timeID=${entry.timeID}&device_id=${activeDeviceId}`, {
-        method: "DELETE",
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userID: user?.userID,
-          timeID: entry.timeID,
-          formType: entry.formType,
-        }),
-      })
-
-      const text = await response.text()
-      try {
-        const result = text ? JSON.parse(text) : {}
-        console.log('Time entry successfully deleted from database.', result)
-      } 
-      catch (e) {
-        console.warn('Could not parse delete response JSON:', text)
-      }
-    } 
-    catch (e) {
-      console.error('Deleting error: ', e)
-    }
   }
 
   const renderRightActions = (index: number) => (

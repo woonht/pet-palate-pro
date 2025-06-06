@@ -216,7 +216,110 @@ const SettingsPage = () => {
     const flattenDevices = device.flat();
     const filteredDevices = flattenDevices.filter(d => d.device_id !== activeDeviceId);
     console.log(filteredDevices);
+    console.log(isDog)
+    console.log(user)
   }
+
+  const saveDeviceConfig = async () => {
+    try{
+      const formType = 'device_config'
+      const response = await fetch(`https://appinput.azurewebsites.net/api/GetDeviceConfig?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`,{
+        method: 'GET',
+        headers: {'Content-Type': 'application/json'},
+      })
+      
+      const text = await response.text()
+      
+      if(!text){
+        console.warn('Empty response from backend')
+        setLoading(false)
+        return
+      }
+      
+      const result = JSON.parse(text)
+      console.log('Successfully load device config: ', result)
+      
+      const deviceMode = isDog ? 'Dog' : 'Cat'
+      const deviceConfig = {
+        userID: user?.userID,
+        device_id: activeDeviceId,
+        count,
+        deviceMode,
+        formType: 'device_config',
+        schedulelist: result.schedulelist
+      }
+      
+      try{
+        const response = await fetch('https://appinput.azurewebsites.net/api/SaveDeviceConfig?', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(deviceConfig)
+      })
+
+        const result = await response.json()
+        console.log('Data saved successfully: ', result)
+      } 
+      catch(e){
+        console.error('Saving error: ', e)
+      }
+      finally{
+        setLoading(false)
+      }
+    }
+    catch(e){
+      console.error('Device config load error: ', e)
+    }
+  }
+
+  useFocusEffect(
+    useCallback(() => {
+    const GetDeviceConfig = async () => {
+      try{
+        const formType = 'device_config'
+        const response = await fetch(`https://appinput.azurewebsites.net/api/GetDeviceConfig?userID=${user?.userID}&formType=${formType}&device_id=${activeDeviceId}`,{
+          method: 'GET',
+          headers: {'Content-Type': 'application/json'},
+        })
+
+        const text = await response.text()
+        if(!text){
+          console.warn('Empty response from backend')
+          setLoading(false)
+          return
+        }
+
+        const result = JSON.parse(text)
+
+        if(!result.deviceMode || !result.count){
+          console.log('No device mode and count')
+          await saveDeviceConfig()
+          console.log('Successfully saved device config.')
+          return
+        }
+
+        console.log('Successfully load device config: ', result)
+        setCount(result.count)
+
+        if(result.mode === 'Dog'){
+          setIsDog(true)
+        }
+        else{
+          setIsDog(false)
+        }
+      }
+      catch(e){
+        console.error('Device config load error: ', e)
+      }
+    }
+    GetDeviceConfig()
+  }, [user, activeDeviceId]))
+
+  useEffect(() => {
+    const saveData = async () => {
+      await saveDeviceConfig()
+    }
+    saveData()
+  },[count, isDog])
 
   if(loading){
     return <CustomLoader/>
@@ -299,8 +402,8 @@ const SettingsPage = () => {
                 <View style={styles.popUpOption}>
                   <Text style={text.settings_text}>Dog</Text>
                   {isDog ? 
-                  (<MaterialIcons name="radio-button-unchecked" size={24} color="black" />): 
-                  <MaterialIcons name="radio-button-checked" size={24} color="black" />
+                  (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
+                  <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
                 }
                 </View>
               </TouchableOpacity>
@@ -308,7 +411,7 @@ const SettingsPage = () => {
               <TouchableOpacity onPress={()=> setIsDog(!isDog)}>
                 <View style={styles.popUpOption}>
                   <Text style={text.settings_text}>Cat</Text>
-                  {isDog ? 
+                  {!isDog ? 
                   (<MaterialIcons name="radio-button-checked" size={24} color="black" />): 
                   <MaterialIcons name="radio-button-unchecked" size={24} color="black" />
                 }

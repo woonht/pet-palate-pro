@@ -39,7 +39,7 @@ app.http('SaveDeviceConfig', {
             };
 
             itemToSave.id = `${data.userID}_${data.device_id}`;
-            itemToSave.device_id = itemToSave.id;
+            itemToSave.device_id = `${data.device_id}`;
 
             let resource;
             if (itemToSave.id) {
