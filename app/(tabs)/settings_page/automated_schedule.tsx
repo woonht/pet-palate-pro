@@ -71,7 +71,7 @@ const AutomatedSchedule = () => {
       }
 
       setTimeList(entries)
-      setIsToggle(new Array(entries.length).fill(false))
+      setIsToggle(entries.map((entry) => entry.isEnable))
     } 
     catch (e) {
       console.error("Loading Error:", e)
@@ -223,7 +223,7 @@ const AutomatedSchedule = () => {
       const newEntry: ScheduleType = {
         timeID: Date.now().toString(),
         time: selectedTime,
-        isEnable: true,
+        isEnable: false,
       }
 
       const updated = [...timelist, newEntry].sort(
@@ -308,9 +308,9 @@ const AutomatedSchedule = () => {
             <Text style={{ fontSize: 30 }}>{formatTime(entry.time)}</Text>
             <Pressable onPress={() => toggleSwitch(index)}>
               {isToggle[index] ? (
-                <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
-              ) : (
                 <FontAwesome6 name="toggle-on" size={35} color="#AA4600" />
+              ) : (
+                <FontAwesome6 name="toggle-off" size={35} color="#AA4600" />
               )}
             </Pressable>
           </View>

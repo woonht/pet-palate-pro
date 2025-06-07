@@ -10,7 +10,9 @@
     "@azure/cosmos": "^4.3.0",
     "@azure/functions": "^4.0.0",
     "@azure/storage-blob": "^12.27.0",
-    "parse-multipart": "^1.0.4"
+    "multiparty": "^4.2.3",
+    "parse-multipart": "^1.0.4",
+    "uuid": "^11.1.0"
   },
   "main": "src/{index.js,functions/*.js}"
 }

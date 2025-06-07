@@ -9,7 +9,6 @@ import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
 import { useDevices } from "@/components/device_context"
-import * as FileSystem from 'expo-file-system'
 
 const Profile = () => {
 
@@ -51,7 +50,6 @@ const Profile = () => {
       }, [])
 
     const pickImage = async () => {
-
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true, // allow user to crop
@@ -63,8 +61,7 @@ const Profile = () => {
         
         if (!result.canceled) {
             const uri = result.assets[0].uri // for SDK 48 and later
-            setImage(uri)
-            savePetImageToDatabase(uri)
+            await uploadImageToAzureFunction(uri)
         }
         setMenuVisible(false)
     }  
@@ -80,10 +77,9 @@ const Profile = () => {
     }
 
     const backToDefault = () => {
-
         if(image){ // image not null
             setImage(undefined)
-            savePetImageToDatabase('')
+            uploadImageToAzureFunction('')
         }
         else{
             Alert.alert('The image now is the default profile image.')
@@ -101,49 +97,69 @@ const Profile = () => {
         }
     }
 
-    const savePetImageToDatabase = async (imageUri: string) => {
+    const convertUriToBase64 = async (uri: string): Promise<string> => {
+        const response = await fetch(uri)
+        const blob = await response.blob()
+
+        return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                // reader.result is something like 'data:image/jpeg;base64,/9j/4AAQ...'
+                const base64data = reader.result as string
+                // Remove the prefix so just the raw base64
+                const base64 = base64data.split(',')[1]
+                resolve(base64)
+            }
+            reader.onerror = reject
+            reader.readAsDataURL(blob)
+        })
+    }
+
+    const uploadImageToAzureFunction = async (imageUri: string) => {
+        setLoading(true)
         try {
-            const fileName = imageUri.split('/').pop() || `pet_${Date.now()}.jpg`;
-            const mimeType = 'image/jpeg'; // You can use a library to detect mime type if needed
+            // Convert to base64
+            const base64Image = await convertUriToBase64(imageUri)
+            const removingImage = !imageUri
 
-            const formData = new FormData();
-            formData.append('userID', user?.userID ?? '');
-            formData.append('device_id', activeDeviceId ?? '');
-            formData.append('file', {
-            uri: imageUri,
-            name: fileName,
-            type: mimeType,
-            } as any); // workaround for TypeScript
-
-            const response = await fetch('https://appinput.azurewebsites.net/api/UploadPetImage', {
-                method: 'POST',
-                body: formData,
-                // Don't set headers manually — fetch will set Content-Type correctly for FormData
-            });
-
-            const text = await response.text(); // Get raw response first
-            let json;
-
-            try {
-            json = JSON.parse(text); // Try parsing it
-            } catch (parseError) {
-            console.error('❌ Failed to parse JSON:', parseError);
-            console.error('Raw response:', text);
-            return;
+            // Prepare payload
+            const payload = {
+                userID: user?.userID,
+                device_id: activeDeviceId,
+                image: removingImage? '' : base64Image,
             }
 
-            if (response.ok) {
-            console.log('Successfully updated pet image in database:', json);
-            // Optionally update UI with result.imageUrl
+            // Call your Azure Function endpoint
+            const response = await fetch('https://appinput.azurewebsites.net/api/UploadPetImage?', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json',},
+                body: JSON.stringify(payload),
+            })
+
+            if (!response.ok) {
+                const errText = await response.text()
+                throw new Error(`Function call failed: ${errText}`)
+            }
+
+            const result = await response.json()
+            console.log('Azure Function response:', result)
+
+            if (result.url) {
+                setImage(result.url)
+                await savePetImage(result.url)
             } 
             else {
-            console.error('Failed to upload image:', json);
+            // Fallback: just use local URI for preview if no blob URL returned
+                console.log('sdsd')
+                setImage(imageUri)
+                await savePetImage(imageUri)
             }
         } 
         catch (error) {
-            console.error('Error uploading pet image:', error);
-        }
-        finally{
+            console.error('Error uploading via Azure Function:', error)
+            Alert.alert('Upload Error', 'Something went wrong.')
+        } 
+        finally {
             setLoading(false)
         }
     }

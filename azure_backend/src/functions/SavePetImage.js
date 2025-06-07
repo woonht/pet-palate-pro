@@ -1,101 +1,88 @@
-const { app } = require('@azure/functions');
-const { BlobServiceClient } = require('@azure/storage-blob');
+const { app } = require("@azure/functions");
 const { CosmosClient } = require("@azure/cosmos");
-const multipart = require('parse-multipart');
+const { BlobServiceClient } = require("@azure/storage-blob");
+const { v4: uuidv4 } = require("uuid");
 
 const endpoint = process.env.COSMOS_URI;
 const key = process.env.COSMOS_KEY;
 const dbName = process.env.COSMOS_DB_NAME;
-const blobConnectionString = process.env.BLOB_CONN_STR;
-const blobContainerName = process.env.BLOB_CONTAINER;
+const client = new CosmosClient({ endpoint, key }); //used to interact with the database (read/write operations), endpoint specific where is the db, key means i am allowed to access
 
-const client = new CosmosClient({ endpoint, key });
-const blobServiceClient = BlobServiceClient.fromConnectionString(blobConnectionString);
+const BLOB_CONN_STR = process.env.BLOB_CONN_STR;
+const BLOB_CONTAINER = process.env.BLOB_CONTAINER;
 
-app.http('UploadPetImage', {
-    methods: ['POST'],
-    authLevel: 'anonymous',
-    handler: async (request, context) => {
-        context.log('UploadPetImage function triggered.');
+app.http("UploadPetImage", {
+  methods: ["POST"],
+  authLevel: "anonymous",
+  handler: async (request, context) => {
+    context.log("UploadPetImage function triggered.");
 
-        try {
-            const contentType = request.headers.get("content-type") || "";
-            if (!contentType.includes("multipart/form-data")) {
-                return {
-                    status: 400,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Expected multipart/form-data" })
-                };
-            }
+    try {
+      const data = await request.json();
+      const userID = data.userID;
+      const device_id = data.device_id;
 
-            const bodyBuffer = Buffer.from(await request.arrayBuffer());
-            const boundary = multipart.getBoundary(contentType);
-            const parts = multipart.Parse(bodyBuffer, boundary);
+      if (!data || !userID || !device_id) {
+        return {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ error: "Missing base64 image, userID or device_id in request body." }),
+        };
+      }
 
-            const file = parts.find(p => p.filename);
-            const userID = parts.find(p => p.name === "userID")?.data.toString();
-            const deviceID = parts.find(p => p.name === "device_id")?.data.toString();
+      const database = client.database(dbName);
+      const container = database.container("BasicInfo");
+      const infoID = `${userID}_${device_id}`
 
-            if (!file || !userID || !deviceID) {
-                return {
-                    status: 400,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "Missing file or identifiers." })
-                };
-            }
+      const { resource:existingRecord } = await container.item(infoID, infoID).read();
 
-            // Upload to Blob
-            const fileName = `${userID}_${deviceID}_${Date.now()}.jpg`;
-            const containerClient = blobServiceClient.getContainerClient(blobContainerName);
-            const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+      if(!existingRecord){
+        return{
+          status: 404,
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({error: 'Pet record not found.'})
+        };
+      }
 
-            await blockBlobClient.uploadData(file.data, {
-                blobHTTPHeaders: { blobContentType: file.type }
-            });
+      let blobUrl = null;
 
-            const imageUrl = blockBlobClient.url;
+      if(!data.image){
+        existingRecord.petImageUrl = '';
+      }
+      else{
+        // Strip base64 prefix if included (like "data:image/jpeg;base64,")
+        const base64Image = data.image.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(base64Image, "base64");
+        const blobName = `${uuidv4()}.jpg`;
 
-            // Update Cosmos DB
-            const database = client.database(dbName);
-            const container = database.container('BasicInfo');
-            const id = `${userID}_${deviceID}`;
+        const blobServiceClient = BlobServiceClient.fromConnectionString(BLOB_CONN_STR);
+        const containerClient = blobServiceClient.getContainerClient(BLOB_CONTAINER);
 
-            const query = {
-                query: 'SELECT * FROM c WHERE c.userID = @userID AND c.device_id = @device_id',
-                parameters: [
-                    { name: '@userID', value: userID },
-                    { name: '@device_id', value: deviceID }
-                ]
-            };
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-            const { resources: items } = await container.items.query(query).fetchAll();
+        await blockBlobClient.uploadData(buffer, {
+          blobHTTPHeaders: { blobContentType: "image/jpeg" },
+        });
 
-            if (items.length === 0) {
-                return {
-                    status: 404,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ error: "No document found with the given userID and device_id." })
-                };
-            }
+        blobUrl = `${containerClient.url}/${blobName}`;
+        existingRecord.petImageUrl = blobUrl; 
+      }
 
-            const doc = items[0];
-            doc.petImageUrl = imageUrl;
+      const { resource:updatedResource } = await container.items.upsert(existingRecord);
 
-            await container.item(doc.id, doc.id).replace(doc);
-
-            return {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ imageUrl })
-            };
-        } 
-        catch (err) {
-            context.log.error("Upload error:", err);
-            return {
-                status: 500,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ error: "Failed to upload image", detail: err.message })
-            };
-        }
+      return {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: "Image uploaded and saved to database successfully", url: blobUrl, updatedResource }),
+      };
+    } 
+    catch (error) {
+      context.log.error("Upload failed:", error);
+      return {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ error: "Server error: " + error.message }),
+      };
     }
+  },
 });
