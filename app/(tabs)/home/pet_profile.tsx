@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth_context"
 import { useTextSize } from "@/components/text_size_context"
 import CustomLoader from "@/components/Custom_Loader"
 import { useDevices } from "@/components/device_context"
+import * as Crypto from 'expo-crypto'
 
 const Profile = () => {
 
@@ -121,6 +122,17 @@ const Profile = () => {
             // Convert to base64
             const base64Image = await convertUriToBase64(imageUri)
             const removingImage = !imageUri
+            const currentHash = await Crypto.digestStringAsync(
+                Crypto.CryptoDigestAlgorithm.SHA256,
+                base64Image
+            )
+
+            const storedHash = await AsyncStorage.getItem(`pet_image_hash_${user?.userID}_${activeDeviceId}`)
+            if (storedHash === currentHash) {
+                console.log('Image unchanged, skipping upload.');
+                setLoading(false);
+                return; // Skip uploading the same image
+            }
 
             // Prepare payload
             const payload = {
@@ -146,12 +158,13 @@ const Profile = () => {
 
             if (result.url) {
                 setImage(result.url)
+                await AsyncStorage.setItem(`pet_image_hash_${user?.userID}_${activeDeviceId}`, currentHash)
                 await savePetImage(result.url)
             } 
             else {
             // Fallback: just use local URI for preview if no blob URL returned
-                console.log('sdsd')
                 setImage(imageUri)
+                await AsyncStorage.setItem(`pet_image_hash_${user?.userID}_${activeDeviceId}`, currentHash)
                 await savePetImage(imageUri)
             }
         } 
