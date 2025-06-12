@@ -198,6 +198,32 @@ const AutomatedSchedule = () => {
       loadTimeFromDatabase()
     },[user]))
 
+    const sendSignalToRpi = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("https://control7968.azurewebsites.net/api/send-command?", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "refresh", deviceId: activeDeviceId }),
+      })
+    
+      if (!response.ok) {
+        console.error("❌ Server error response")
+        setLoading(false)
+        return
+      }
+      const result = await response.json()
+      console.log("✅ Success:", result);
+    } 
+    catch (e) {
+      console.error("❌ Sending error:", e)
+      Alert.alert("Error", "Something went wrong while sending the command.");
+    }
+    finally{
+      setLoading(false)
+    }
+  }
+
   const onChange = (event: DateTimePickerEvent, selectedTime?: Date) => {
     if (event.type === "dismissed") {
       setIsVisible(false)
@@ -223,17 +249,21 @@ const AutomatedSchedule = () => {
       const newEntry: ScheduleType = {
         timeID: Date.now().toString(),
         time: selectedTime,
-        isEnable: false,
+        isEnable: true,
       }
 
       const updated = [...timelist, newEntry].sort(
-        (a, b) => a.time.getTime() - b.time.getTime()
-      )
+        (a, b) => {
+        const aMinutes = a.time.getHours() * 60 + a.time.getMinutes()
+        const bMinutes = b.time.getHours() * 60 + b.time.getMinutes()
+        return aMinutes - bMinutes
+      })
 
       setTimeList(updated)
       saveTimeToDatabase(updated)
-      setIsToggle(new Array(updated.length).fill(false))
+      setIsToggle((prevToggles) => [...prevToggles, true])
       setTime(selectedTime)
+      sendSignalToRpi()
     }
   }
 

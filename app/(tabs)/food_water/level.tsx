@@ -4,9 +4,10 @@ import CustomLoader from "@/components/Custom_Loader"
 import { FontAwesome, FontAwesome6, Ionicons } from "@expo/vector-icons"
 import { useFocusEffect } from "expo-router"
 import React, { useCallback, useState } from "react"
-import { StyleSheet, Text, View } from "react-native"
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useDevices } from "@/components/device_context"
+import Tooltip from 'react-native-walkthrough-tooltip'
 
 const Monitor = () => {
 
@@ -18,6 +19,9 @@ const Monitor = () => {
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
   const { loadUserFeeders, activeDeviceId } = useDevices()
+  const [refreshing, setRefreshing] = useState(false)
+  const [online, setOnline] = useState(false)
+  const [showTooltip, setShowTooltip] = useState(false)
  
   useFocusEffect(
       useCallback(() => {
@@ -26,158 +30,145 @@ const Monitor = () => {
           }
   }, [user]))
 
-  const foodLevel = async () => {
-    try{
-      const response = await fetch('', {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'}
+  const sendSignalToGetLevel = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("https://control7968.azurewebsites.net/api/send-command?", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "refresh", deviceId: activeDeviceId }),
       })
 
-      const text = await response.text()
-      
-      if(!text){
-        console.warn('Empty response received')
+      if (!response.ok) {
+        console.error("❌ Server error response.")
+        setOnline(false)
+        setLoading(false)
         return
       }
-
-      const result = JSON.parse(text)
-
-      if (result.error) {
-          console.warn("Server responded with error:", result.error)
-          return
+      const result = await response.json()
+      setFood(result.response.payload.food_level)        
+      setWater(result.response.payload.water_level)
+      
+      if(result.response.payload.feeder_mode === 'SCHEDULE'){
+        setLight(false)
+        setOnline(false)
       }
-    
-      if (result && typeof result === "object") {
-        setFood(`${result.food_level}%` || 'Not detected')
-        console.log("Food level info loaded:", result)
-      }      
+      else if(result.response.payload.feeder_mode === 'AI'){
+        setLight(true)
+        setOnline(true)
+      }
+      console.log("✅ Success:", result);
+    } 
+    catch (e) {
+      console.error("❌ Network or parsing error:", e)
+      Alert.alert("Error", "Something went wrong while sending the command.");
     }
-    catch(e){
-      console.error('Failed to get food level info: ', e)
-    }
-    finally{ 
+    finally{
       setLoading(false)
     }
   }
 
-  const waterLevel = async () => {
-    try{
-      const response = await fetch('', {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'}
-      })
-
-      const text = await response.text()
-      
-      if(!text){
-        console.warn('Empty response received')
-        return
+  useFocusEffect(
+    useCallback(() => {
+      const fetchData = async () => {
+        await sendSignalToGetLevel()
       }
+      fetchData()
+    },[user, activeDeviceId]))
 
-      const result = JSON.parse(text)
+  const onRefresh = useCallback( async () => {
+    setRefreshing(true)
+    await sendSignalToGetLevel()
+    setRefreshing(false)
+  }, [sendSignalToGetLevel])
 
-      if (result.error) {
-          console.warn("Server responded with error:", result.error)
-          return
-      }
-    
-      if (result && typeof result === "object") {
-        setFood(result.water_level || '')
-        console.log("Water level info loaded:", result)
-      }
-    }
-    catch(e){
-      console.error('Failed to get water level info: ', e)
-    }
-    finally{ 
-      setLoading(false)
-    }
-  }
-
-  const lightLevel = async () => {
-    try{
-      const response = await fetch('', {
-        method: 'GET',
-        headers: {'Content-Type': 'application/json'}
-      })
-
-      const text = await response.text()
-      
-      if(!text){
-        console.warn('Empty response received')
-        return
-      }
-
-      const result = JSON.parse(text)
-
-      if (result.error) {
-          console.warn("Server responded with error:", result.error)
-          return
-      }
-    
-      if (result && typeof result === "object") {
-        setFood(result.light_level || '')
-        console.log("Light level info loaded:", result)
-      }
-    }
-    catch(e){
-      console.error('Failed to get light density info: ', e)
-    }
-    finally{ 
-      setLoading(false)
-    }
-  }
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     const fetchData = async () => {
-  //       await foodLevel()
-  //       await waterLevel()
-  //       await lightLevel()
-  //     }
-  //     fetchData()
-  //   },[user]))
-
-  if(!loading){
-    return <CustomLoader/>
+  if(loading){
+    return <CustomLoader message="Loading device status..."/>
   }
 
   return(
     <SafeAreaView style={styles.whole_page}>
-      <View style={styles.icon}>
-        <View style={styles.food_icon}> 
-            <FontAwesome6 name="bowl-food" size={100} color="#AA4600" />
-            <Text style={text.settings_text}>{food}</Text>
-        </View>
-        <View style={styles.water_icon}>
-            <FontAwesome6 name="glass-water" size={100} color="#27ceff" />
-            <Text style={text.settings_text}>{water}</Text>
-        </View>  
+      <ScrollView 
+        contentContainerStyle={styles.scroll} 
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {online ? (
+          <View style={styles.status}>
+            <Tooltip
+              isVisible={showTooltip}
+              content={<Text style={text.settings_text}>Device is online.</Text>}
+              placement="left"
+              onClose={() => setShowTooltip(false)}
+            >
+              <FontAwesome name="dot-circle-o" size={24} color="green" onPress={ () => setShowTooltip(true)}/>
+            </Tooltip>
+          </View>
+        ): (
+          <View style={styles.status}>
+            <Tooltip
+              isVisible={showTooltip}
+              content={ <Text>Device is offline.</Text> }
+              placement="left"
+              contentStyle={{ backgroundColor: '#c7c6c3' }} 
+              backgroundColor=""
+              onClose={() => setShowTooltip(false)}
+            >
+              <FontAwesome name="dot-circle-o" size={24} color="#fc7303" onPress={ () => setShowTooltip(true)}/>
+            </Tooltip>   
+          </View>
+        )}
+        <View style={styles.icon}>
+          <View style={styles.food_icon}> 
+              <FontAwesome6 name="bowl-food" size={100} color="#AA4600" />
+              <Text style={text.settings_text}>{food}</Text>
+          </View>
+          <View style={styles.water_icon}>
+              <FontAwesome6 name="glass-water" size={100} color="#27ceff" />
+              <Text style={text.settings_text}>{water}</Text>
+          </View>  
 
-        {light ? (
-          <View style={styles.light_icon}>
-              <FontAwesome name="sun-o" size={100} color="#f27d0f" />
-              <Text style={text.settings_text}>Sufficient light, AI-Detected Feeding Active</Text>
-          </View>      
-        ) : (
-          <View style={styles.light_icon}>
-              <Ionicons name="moon" size={100} color="#f2ea0f" />
-              <View style={styles.text}>
-                <Text style={text.settings_text}>Insufficient light, Scheduled Feeding Active</Text>
-              </View>
-          </View>    
-        )}    
-      </View>
+          {light ? (
+            <View style={styles.light_icon}>
+                <FontAwesome name="sun-o" size={100} color="#f27d0f" />
+                <Text style={text.settings_text}>Sufficient light, AI-Detected Feeding Active</Text>
+            </View>      
+          ) : (
+            <View style={styles.light_icon}>
+                <Ionicons name="moon" size={100} color="#f2ea0f" />
+                <View style={styles.text}>
+                  <Text style={text.settings_text}>Insufficient light, Scheduled Feeding Active</Text>
+                </View>
+            </View>    
+          )}    
+        </View>
+      </ScrollView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-
+  
   whole_page: {
 
     flex: 1,
     backgroundColor: '#FFF7ED',
+  },
+
+  scroll: {
+    
+    paddingTop: 10,
+    flex: 1,
+  },
+
+  status: {
+
+    justifyContent:'center',
+    alignItems:'flex-end',
+    padding: 10
+  },
+
+  tooltip: {
+
   },
   
   icon: {
@@ -191,7 +182,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
   },  
   
   water_icon: {
@@ -199,7 +189,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
   },  
   
   light_icon: {
@@ -207,7 +196,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
   },
 
   text: {

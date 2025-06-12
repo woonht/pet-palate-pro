@@ -2,7 +2,7 @@ import { useAuth } from '@/components/auth_context'
 import CustomLoader from '@/components/Custom_Loader'
 import { useDevices } from '@/components/device_context'
 import { useTextSize } from '@/components/text_size_context'
-import { AntDesign, Entypo } from '@expo/vector-icons'
+import { AntDesign, Entypo, FontAwesome } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useCallback, useEffect, useState } from 'react'
 import { View, Text, Pressable, StyleSheet, Modal, TextInput, Alert } from 'react-native'
@@ -21,6 +21,7 @@ export const DeviceSwitcher = () => {
   const [deviceId, setDeviceId] = useState('')
   const [snackbar, setSnackbar] = useState('')
   const [snackbarVisible, setSnackbarVisible] = useState(false)
+  const [online, setOnline] = useState(false)
     
   type FeederDevice = {
     device_name: string;
@@ -165,30 +166,64 @@ export const DeviceSwitcher = () => {
     setDeviceId('')
     setDeviceName('')
   }
+  
+  useFocusEffect(
+    useCallback( () => {
+      const sendSignalToCheckOnline = async () => {
+        try {
+          setLoading(true)
+        const response = await fetch("https://control7968.azurewebsites.net/api/send-command?", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: "refresh", deviceId: activeDeviceId }),
+        })
 
-  const debug = () => {
-
-    console.log(devices)
-    console.log(activeDeviceId)
-  }
+        if (!response.ok) {
+          console.error("❌ Server error response.")
+          setOnline(false)
+          setLoading(false)
+          return
+        }
+        else{
+          setOnline(true)
+        }
+      }
+      catch(e){
+        console.error("❌ Network or parsing error:", e)
+        Alert.alert("Error", "Something went wrong while sending the command.");
+      }
+      finally{
+        setLoading(false)
+      }
+    }
+    sendSignalToCheckOnline()
+  },[user]))
 
   if(loading){
-    return <CustomLoader/>
+    return <CustomLoader message='Checking on device status...'/>
   }
   
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.whole_page}>
       {devices.map(devices => (
-        <View key={devices.device_id} style={styles.container}>
-          <Pressable onPress={() => {setActiveDevice(devices.device_id); router.push('/(tabs)/home/pet_profile')}}>
-            <Text style={[text.settings_title, {fontWeight:'bold'}]}>{devices.device_name}</Text>
-          </Pressable>
-        </View>
-      ))}
+        <Pressable 
+          key={devices.device_id}
+          onPress={() => {setActiveDevice(devices.device_id); router.push('/(tabs)/home/pet_profile')}}
+          style={styles.container}
+        >
+          <Text style={[text.settings_title, {fontWeight:'bold'}]}>{devices.device_name}</Text>
 
-      <Pressable onPress={() => debug()}>
-        <Text>debugs</Text>
-      </Pressable>
+          {online ? (
+            <View style={styles.indicator}>
+              <FontAwesome name="dot-circle-o" size={24} color="green"/>
+            </View>
+          ) : (
+            <View style={styles.indicator}>
+              <FontAwesome name="dot-circle-o" size={24} color="#fc7303"/>
+            </View>
+          )}
+        </Pressable>
+      ))}
 
       <Pressable 
       android_ripple={{ color:null }}
@@ -283,7 +318,7 @@ const styles = StyleSheet.create({
     width: '90%',
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'column',
+    flexDirection: 'row',
     paddingInline: 20,
     padding: 10,
   },
@@ -337,6 +372,13 @@ const styles = StyleSheet.create({
     marginTop: 5,
     marginBottom: 15,
   },
+
+  indicator: {
+
+    position: 'absolute',
+    right: 0,
+    bottom: 30,
+  }
 })
 
 const dynamicStyles = (textSize:number) => ({

@@ -211,15 +211,6 @@ const SettingsPage = () => {
       {text: 'Yes', style: 'destructive', onPress: () => {removeDeviceID(device_idToRemove, status); setDeviceVisible(false)} }])
   }
 
-  const debug = () => {
-    console.log(device);
-    const flattenDevices = device.flat();
-    const filteredDevices = flattenDevices.filter(d => d.device_id !== activeDeviceId);
-    console.log(filteredDevices);
-    console.log(isDog)
-    console.log(user)
-  }
-
   const saveDeviceConfig = async () => {
     try{
       const formType = 'device_config'
@@ -586,17 +577,7 @@ const SettingsPage = () => {
                 <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
             </View>
           </Pressable>
-
-          <Pressable onPress={debug}>
-            <View style={styles.rowSettings}>
-                <View style={styles.IconTextLeft}>
-                  <MaterialIcons name="question-mark" size={24} color="black" />
-                  <Text style={text.settings_text}>debug</Text>
-                </View>
-                <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
-            </View>
-          </Pressable>
-                
+          
         </View>
       </ScrollView>
     </SafeAreaView>  

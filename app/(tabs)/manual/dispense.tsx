@@ -30,7 +30,7 @@ const FoodDispense = () => {
       const response = await fetch('https://control7968.azurewebsites.net/api/send-command?', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ command: 'dispense_food', deviceId: 'pet_feeder_1' })
+        body: JSON.stringify({ command: 'dispense_food', deviceId: activeDeviceId })
       })
 
       const result = await response.text()
