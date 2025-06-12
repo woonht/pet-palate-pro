@@ -22,12 +22,12 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
     return null;
   }
 
-  type IconProps = { color: string };
+  type IconProps = { color: string; size: number};
   const icons: { [key: string]: (props: IconProps) => JSX.Element } = {
-    'home': () => <MaterialIcons name="pets" size={30} color="white"/>,
-    'manual': () => <FontAwesome6 name="bowl-rice" size={30} color="white" />,
-    'food_water': () => <MaterialCommunityIcons name="car-brake-fluid-level" size={30} color="white" />,
-    'settings_page': () => <Feather name="settings" size={30} color='white' />,
+    'home': ({color, size}) => <MaterialIcons name="pets" size={size} color={color}/>,
+    'manual': ({color, size}) => <FontAwesome6 name="bowl-rice" size={size} color={color} />,
+    'food_water': ({color, size}) => <MaterialCommunityIcons name="car-brake-fluid-level" size={size} color={color} />,
+    'settings_page': ({color, size}) => <Feather name="settings" size={size} color={color} />,
   };
 
 
@@ -80,7 +80,8 @@ const TabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => {
           >
             {
               icons[route.name]({
-                color: isFocused? colors.primary : 'white'
+                color: isFocused? 'white' : 'black',
+                size: isFocused? 36 : 28
               })
             }
             {typeof label === 'function' ? (
