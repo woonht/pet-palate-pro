@@ -113,6 +113,9 @@ const AutomatedSchedule = () => {
         deviceMode: result.deviceMode,
         formType: result.formType,
         schedulelist: toStoreTime,
+        notification: result.notification,
+        level_notification: result.level_notification,
+        dispense_notification: result.dispense_notification,
       }
       console.log(toStore)
 

@@ -17,7 +17,8 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.woonht.petpalatepro"
+      "package": "com.woonht.petpalatepro",
+      "googleServicesFile": "./google-services.json"
     },
     "web": {
       "bundler": "metro",
@@ -41,7 +42,8 @@
           "iosUrlScheme": "com.googleusercontent.apps.637482238294-pfhbel1327logvi3bf1u22i39gs0qje9",
           "iosClientId": "637482238294-pfhbel1327logvi3bf1u22i39gs0qje9.apps.googleusercontent.com"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

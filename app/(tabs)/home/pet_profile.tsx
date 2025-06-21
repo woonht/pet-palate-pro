@@ -39,18 +39,15 @@ const Profile = () => {
             }
     }, [user, activeDeviceId]))
 
-    useEffect(() => { //useEffect only runs once and will not run again if the component is kept in memory (using expo router), eg. pet_profile -> basic_info -> pet_profile, update in basic_info will not update pet_profile because pet_profile is kept in memory
-        (async () => {
-          if (Platform.OS !== 'web') {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync(); // pop up
+    const pickImage = async () => {
+        if (Platform.OS !== 'web') {
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync() // pop up
             if (status !== 'granted') {
-              alert('Sorry, we need camera roll permissions to make this work!');
+              Alert.alert('Sorry, we need camera roll permissions to make this work!')
+              return
             }
           }
-        })()
-      }, [])
 
-    const pickImage = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true, // allow user to crop

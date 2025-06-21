@@ -1,7 +1,7 @@
 import { Entypo, Feather, FontAwesome, Ionicons, MaterialCommunityIcons, MaterialIcons, Octicons } from "@expo/vector-icons"
 import { router, useFocusEffect } from "expo-router"
 import React, { useCallback, useEffect, useState } from "react"
-import { Alert, Image, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
+import { Alert, Image, Linking, Modal, ScrollView, StyleSheet, TextInput, TouchableOpacity } from "react-native"
 import { Pressable, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useAuth } from "@/components/auth_context"
@@ -237,7 +237,10 @@ const SettingsPage = () => {
         count,
         deviceMode,
         formType: 'device_config',
-        schedulelist: result.schedulelist
+        schedulelist: result.schedulelist,
+        notification: result.notification,
+        level_notification: result.level_notification,
+        dispense_notification: result.dispense_notification,
       }
       
       try{
@@ -305,12 +308,49 @@ const SettingsPage = () => {
     GetDeviceConfig()
   }, [user, activeDeviceId]))
 
-  useEffect(() => {
+  const sendSignalToGetLevel = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("https://control7968.azurewebsites.net/api/send-command?", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: "refresh", deviceId: activeDeviceId }),
+      })
+
+      if (!response.ok) {
+        console.error("❌ Server error response.")
+        setLoading(false)
+        return
+      }
+      const result = await response.json()      
+      console.log("✅ Success:", result);
+    } 
+    catch (e) {
+      console.error("❌ Network or parsing error:", e)
+      Alert.alert("Error", "Something went wrong while sending the command.");
+    }
+    finally{
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { //useEffect only runs once and will not run again if the component is kept in memory (using expo router), eg. pet_profile -> basic_info -> pet_profile, update in basic_info will not update pet_profile because pet_profile is kept in memory
     const saveData = async () => {
       await saveDeviceConfig()
+      await sendSignalToGetLevel()
     }
     saveData()
   },[count, isDog])
+
+  const openWebsite = async (url: string) => {
+    const supported = await Linking.canOpenURL(url)
+    if (supported) {
+      await Linking.openURL(url)
+    } 
+    else {
+      Alert.alert(`Don't know how to open this URL: ${url}`)
+    }
+  }
 
   if(loading){
     return <CustomLoader/>
@@ -568,12 +608,12 @@ const SettingsPage = () => {
 
           </Modal>
 
-          <Pressable>
+          <Pressable onPress={() => openWebsite('https://pet-palate-pro-website.vercel.app/') }>
             <View style={styles.rowSettings}>
                 <View style={styles.IconTextLeft}>
                   <MaterialIcons name="question-mark" size={24} color="black" />
                   <Text style={text.settings_text}>FAQ</Text>
-                </View>
+                </View> 
                 <MaterialIcons name="arrow-forward-ios" size={24} color="black" />
             </View>
           </Pressable>
@@ -592,6 +632,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF7ED',
     paddingTop: 20,
     gap: 10,
+    height: '80%'
   },
 
   scroll: {
@@ -599,6 +640,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     alignItems: 'center',
     gap: 10,
+    paddingBottom: 80,
   },
   
   settings:{

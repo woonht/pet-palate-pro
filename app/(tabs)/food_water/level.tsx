@@ -158,6 +158,7 @@ const styles = StyleSheet.create({
     
     paddingTop: 10,
     flex: 1,
+    paddingBottom: 20,
   },
 
   status: {

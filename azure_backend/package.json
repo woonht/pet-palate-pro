@@ -10,7 +10,9 @@
     "@azure/cosmos": "^4.3.0",
     "@azure/functions": "^4.0.0",
     "@azure/storage-blob": "^12.27.0",
+    "azure-iothub": "^1.16.5",
     "multiparty": "^4.2.3",
+    "node-fetch": "^3.3.2",
     "parse-multipart": "^1.0.4",
     "uuid": "^11.1.0"
   },

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "544679303935",
+    "project_id": "pet-palate-pro-5aafd",
+    "storage_bucket": "pet-palate-pro-5aafd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:544679303935:android:b693a2205a12a172a20aca",
+        "android_client_info": {
+          "package_name": "com.woonht.petpalatepro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZ2lTc6E2spEW1HEupwx9XUj-0tzWZS7A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

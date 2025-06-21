@@ -8,6 +8,7 @@ import { useAuth } from "@/components/auth_context"
 import Toast from 'react-native-toast-message'
 import CustomLoader from "@/components/Custom_Loader"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { MaterialIcons } from "@expo/vector-icons"
 
 const SignIn = () => {
 
@@ -15,6 +16,7 @@ const SignIn = () => {
     const [password, setPassword] = useState('')
     const { setUser } = useAuth()
     const [loading, setLoading] = useState(false)
+    const [secure, setSecure] = useState(true)
 
     useFocusEffect(
         useCallback(() => {
@@ -25,7 +27,7 @@ const SignIn = () => {
             emptySignInFill()
         },[]))
 
-    useEffect(() => {
+    useEffect(() => { 
         GoogleSignin.configure({
         webClientId: '637482238294-n5ds4ua9tsu6m2tlpo407v2cuk60dv8k.apps.googleusercontent.com',
         offlineAccess: true,
@@ -180,6 +182,7 @@ const SignIn = () => {
                         placeholder="Bla Bla Bla"
                         placeholderTextColor={'grey'}
                         value={username}
+                        autoCorrect={false}
                         onChangeText={(text) => setUsername(text)}
                         />
                 </View>
@@ -191,8 +194,17 @@ const SignIn = () => {
                         placeholderTextColor={'grey'}
                         value={password}
                         onChangeText={(text) => setPassword(text)}
-                        secureTextEntry
+                        secureTextEntry={secure}
+                        textContentType="password"
+                        autoCorrect={false}
                         />
+                    <Pressable onPress={() => setSecure(!secure)}>
+                        {secure ? (
+                            <MaterialIcons name="password" size={24} color="black"/>
+                        ) : (
+                            <MaterialIcons name="text-format" size={24} color="black" />
+                        )}
+                    </Pressable>
                 </View>
                 <Pressable onPress={login} style={styles.login_button}>
                     <Text style={styles.login_signup_text}>Log in</Text>
@@ -269,7 +281,10 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: 'white',
         flex: 1,
+        flexGrow: 1,
         fontSize: 18,
+        opacity: 1,
+        color: 'black',
     },
 
     sign_in_row: {

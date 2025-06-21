@@ -23,7 +23,7 @@ export default function Index() {
         const asyncisLogin = await AsyncStorage.getItem('login')
         const checkGoogleSignIn = GoogleSignin.getCurrentUser()
           
-        const isLogin = checkGoogleSignIn !== null && asyncisLogin === 'true'
+        const isLogin = checkGoogleSignIn !== null || asyncisLogin === 'true'
         
         setLoggedIn(isLogin)
         setLoading(false)

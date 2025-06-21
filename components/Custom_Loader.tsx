@@ -1,17 +1,29 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import LottieView from 'lottie-react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 
-const CustomLoader = ({ message = 'Loading...' }: { message?: string }) => {
+type CustomLoaderProps = {
+  message?: string;
+  color?: string;
+  size?: 'small' | 'large';
+  backgroundColor?: string;
+  textStyle?: TextStyle;
+  containerStyle?: ViewStyle;
+};
+
+const CustomLoader: React.FC<CustomLoaderProps> = ({
+  message = 'Loading...',
+  color = 'orange',
+  size = 'large',
+  backgroundColor = '#FFF7F7',
+  textStyle,
+  containerStyle,
+}) => {
   return (
-    <View style={styles.loaderContainer}>
-      <LottieView
-        source={require('../assets/animations/loading.json')}
-        autoPlay
-        loop
-        style={styles.loadingAnimation}
-      />
-      <Text style={styles.loaderText}>{message}</Text>
+    <View style={[styles.loaderContainer, { backgroundColor }, containerStyle]}>
+      <ActivityIndicator size={size} color={color} />
+      <Text style={[styles.loaderText, textStyle]} accessibilityRole="text">
+        {message}
+      </Text>
     </View>
   );
 };
@@ -20,23 +32,14 @@ export default CustomLoader;
 
 const styles = StyleSheet.create({
   loaderContainer: {
-
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    flex: 1,
-    backgroundColor: '#FFF7F7',
   },
-
   loaderText: {
-    
-    marginTop: 10,
-    fontSize: 24,
+    marginTop: 12,
+    fontSize: 20,
     color: '#666',
+    textAlign: 'center',
   },
-
-  loadingAnimation: {
-
-    width: '100%',
-    height: '60%'
-  }
 });

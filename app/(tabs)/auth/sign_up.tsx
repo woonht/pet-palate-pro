@@ -6,6 +6,7 @@ import Toast from "react-native-toast-message"
 import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { useAuth } from "@/components/auth_context"
 import CustomLoader from "@/components/Custom_Loader"
+import { MaterialIcons } from "@expo/vector-icons"
 
 const SignUp = () => {
 
@@ -15,6 +16,8 @@ const SignUp = () => {
     const [confirm, setConfirm] = useState('')
     const { setUser } = useAuth()
     const [loading, setLoading] = useState(false)
+    const [secure, setSecure] = useState(true)
+    const [secureConfirm, setSecureConfirm] = useState(true)
 
     useFocusEffect(
         useCallback( () => {
@@ -180,43 +183,63 @@ const SignUp = () => {
                 <Text style={styles.get_started_text}>Get Started</Text>
             </View>
             <View style={styles.sign_up_info}>
-                <View>
+                <View style={styles.sign_up_row}>
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Username"
                         placeholderTextColor={'grey'}
                         value={name}
                         onChangeText={(text) => setUsername(text)}
+                        autoCorrect={false}
                         />
                 </View>
-                <View>
+                <View style={styles.sign_up_row}>
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Email"
                         placeholderTextColor={'grey'}
                         value={email}
                         onChangeText={(text) => setEmail(text)}
+                        autoCorrect={false}
                         />
                 </View>
-                <View>
+                <View style={styles.sign_up_row}>
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Password"
                         placeholderTextColor={'grey'}
                         value={password}
                         onChangeText={(text) => setPassword(text)}
-                        secureTextEntry
+                        secureTextEntry={secure}
+                        textContentType="password"
+                        autoCorrect={false}
                         />
+                    <Pressable onPress={() => setSecure(!secure)}>
+                        {secure ? (
+                            <MaterialIcons name="password" size={24} color="black"/>
+                        ) : (
+                            <MaterialIcons name="text-format" size={24} color="black" />
+                        )}
+                    </Pressable>    
                 </View>
-                <View>
+                <View style={styles.sign_up_row}>
                     <TextInput
                         style={styles.sign_up_input}
                         placeholder="Confirm Password"
                         placeholderTextColor={'grey'}
                         value={confirm}
                         onChangeText={(text) => setConfirm(text)}
-                        secureTextEntry
+                        secureTextEntry={secureConfirm}
+                        textContentType="password"
+                        autoCorrect={false}
                         />
+                    <Pressable onPress={() => setSecureConfirm(!secureConfirm)}>
+                        {secureConfirm ? (
+                            <MaterialIcons name="password" size={24} color="black"/>
+                        ) : (
+                            <MaterialIcons name="text-format" size={24} color="black" />
+                        )}
+                    </Pressable>
                 </View>
                 <Pressable onPress={signUp} style={styles.sign_up_button}>
                     <Text style={styles.sign_up_text}>Sign up</Text>
@@ -262,6 +285,8 @@ const styles = StyleSheet.create({
 
         backgroundColor: '#D9D9D9',
         width: '90%',
+        justifyContent: 'center',
+        alignItems: 'center',
         borderRadius: 25,
         padding: 10,
         paddingTop: 20,
@@ -272,9 +297,19 @@ const styles = StyleSheet.create({
     sign_up_input: {
 
         borderRadius: 25,
-        fontSize: 18,
         backgroundColor: 'white',
-        paddingHorizontal: 15,
+        flex: 1,
+        fontSize: 18,
+    },
+
+    sign_up_row: {
+
+        flexDirection: 'row',
+        justifyContent:'center',
+        alignItems:'center',
+        backgroundColor: 'white',
+        borderRadius: 25,
+        paddingInline: 20,
     },
 
     sign_up_text: {

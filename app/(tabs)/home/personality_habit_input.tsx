@@ -133,11 +133,6 @@ const UserInputPersonalityHabit = () => {
         {text: 'Clear', style: "destructive", onPress: () => setInput({ temperament:'', skills:'', like:'', dislike:''} )}] )
   }
 
-  const debug = () => {
-    console.log(activeDeviceId)
-    console.log(user?.userID)
-  }
-
   if(loading){
     return <CustomLoader/>
   }
@@ -195,13 +190,6 @@ const UserInputPersonalityHabit = () => {
             <Text style={text.settings_text}>Save</Text>
           </Pressable>
         </View>
-
-        <View style={styles.save_empty}>
-          <Pressable onPress={debug}>
-            <Text style={text.settings_text}>debug</Text>
-          </Pressable>
-        </View>
-
 
     </SafeAreaView>
   )
