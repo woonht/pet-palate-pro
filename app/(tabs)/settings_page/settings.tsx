@@ -66,9 +66,9 @@ const SettingsPage = () => {
     try {
       setLoading(true)
       await GoogleSignin.signOut() // Sign out from Google
-      setUser(null) // Clear user context
-      
       await AsyncStorage.setItem('login', 'false')
+      await AsyncStorage.removeItem('user_data')
+      setUser(null) // Clear user context
 
       router.replace('/(tabs)/auth/sign_in') // Navigate to sign in screen      
       Toast.show({
@@ -383,7 +383,7 @@ const SettingsPage = () => {
 
         <View style={styles.settings}>
 
-          <Pressable onPress={ () => router.push('/(tabs)/settings_page/notification') }>
+          <Pressable onPress={ () => router.push('/(tabs)/settings_page/notification') } >
             <View style={styles.rowSettings}>
               <View style={styles.IconTextLeft}>
                 <Ionicons name="notifications" size={24} color="black" />

@@ -51,6 +51,13 @@ const FoodDispense = () => {
     }
   }
 
+  const confirmDispense = async () => {
+    Alert.alert('Food dispense confirmation', "Are you sure you want to dispense the food?", [
+      {text: 'No', style: 'cancel'},
+      {text: 'Yes', onPress: () => sendDispenseCommand()}
+    ])
+  }
+
   if(loading){
     return <CustomLoader/>
   }
@@ -65,7 +72,7 @@ const FoodDispense = () => {
       </PlatformPressable>
       <View style={styles.button}>
         <PlatformPressable 
-        onPress={() => sendDispenseCommand()}
+          onPress={() => confirmDispense()}
         >
           <AntDesign name="pluscircle" size={150} color="#AA4600"/>
         </PlatformPressable>

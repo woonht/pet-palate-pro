@@ -7,6 +7,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { useAuth } from "@/components/auth_context"
 import CustomLoader from "@/components/Custom_Loader"
 import { MaterialIcons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const SignUp = () => {
 
@@ -135,6 +136,7 @@ const SignUp = () => {
                 }
                 
                 try{
+                    await AsyncStorage.setItem('user_data', JSON.stringify(userData))
                     const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},

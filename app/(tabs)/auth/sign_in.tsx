@@ -55,14 +55,16 @@ const SignIn = () => {
             console.warn(result)
 
             if(username === result.user.name && password === result.user.password){
-                setUser({
+                const userData = {
                     userID: result.user.userID,
                     name: result.user.name,
                     email: result.user.email,
                     photo: '',
-                    provider: 'local',
-                })
-
+                    provider: 'local' as const 
+                }
+                setUser(userData)
+                
+                await AsyncStorage.setItem('user_data', JSON.stringify(userData))
                 await AsyncStorage.setItem('login', 'true')
 
                 router.replace('/(tabs)/auth/device_switcher')
@@ -134,6 +136,7 @@ const SignIn = () => {
                 }
                 
                 try{
+                    await AsyncStorage.setItem('user_data', JSON.stringify(userData))
                     const response = await fetch('https://appinput.azurewebsites.net/api/SaveUserData?', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},

@@ -4,6 +4,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { Redirect } from 'expo-router'
 import { useEffect, useState } from 'react'
 import * as SplashScreen from 'expo-splash-screen'
+import { useAuth } from '@/components/auth_context'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -11,6 +12,7 @@ export default function Index() {
 
   const [loading, setLoading] = useState(true)
   const [loggedIn, setLoggedIn] = useState(false)
+  const { setUser } = useAuth()
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -21,11 +23,19 @@ export default function Index() {
         })
         
         const asyncisLogin = await AsyncStorage.getItem('login')
-        const checkGoogleSignIn = GoogleSignin.getCurrentUser()
+        const currentUser = GoogleSignin.getCurrentUser()
           
-        const isLogin = checkGoogleSignIn !== null || asyncisLogin === 'true'
+        const isLogin = currentUser !== null || asyncisLogin === 'true'
         
         setLoggedIn(isLogin)
+
+        if(isLogin){
+          const storedUser = await AsyncStorage.getItem('user_data')
+          if(storedUser){
+            setUser(JSON.parse(storedUser))
+          }
+        }
+
         setLoading(false)
       }
       catch(e){
@@ -45,5 +55,5 @@ export default function Index() {
     return <CustomLoader/>
   }
 
-  return <Redirect href={ loggedIn ? '/(tabs)/home/pet_profile' : '/auth/sign_in'} />;
+  return <Redirect href={ loggedIn ? '/(tabs)/auth/device_switcher' : '/auth/sign_in'} />;
 }
